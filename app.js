@@ -25,7 +25,7 @@ class Sim4SimApp {
     init() {
         // Scene setup
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
+        this.scene.background = new THREE.Color(0xf0f0f0); // Light gray background
 
         // Camera setup
         this.camera = new THREE.PerspectiveCamera(
@@ -94,11 +94,32 @@ class Sim4SimApp {
     }
 
     createGroundPlane() {
+        // Create checkerboard texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        
+        const tileSize = 64; // Size of each checker square
+        const tilesPerSide = canvas.width / tileSize;
+        
+        for (let x = 0; x < tilesPerSide; x++) {
+            for (let y = 0; y < tilesPerSide; y++) {
+                const isEven = (x + y) % 2 === 0;
+                context.fillStyle = isEven ? '#ffffff' : '#e0e0e0';
+                context.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            }
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(10, 10); // Repeat the pattern across the ground
+        
         const geometry = new THREE.PlaneGeometry(50, 50);
         const material = new THREE.MeshLambertMaterial({ 
-            color: 0x7CFC00,
-            transparent: true,
-            opacity: 0.8
+            map: texture,
+            transparent: false
         });
         
         const ground = new THREE.Mesh(geometry, material);
@@ -107,10 +128,10 @@ class Sim4SimApp {
         ground.name = 'ground';
         this.scene.add(ground);
 
-        // Grid helper
-        const gridHelper = new THREE.GridHelper(50, 50, 0x888888, 0xcccccc);
+        // Simplified grid helper with subtle lines
+        const gridHelper = new THREE.GridHelper(50, 25, 0x999999, 0xbbbbbb);
         gridHelper.material.transparent = true;
-        gridHelper.material.opacity = 0.3;
+        gridHelper.material.opacity = 0.2;
         this.scene.add(gridHelper);
     }
 
