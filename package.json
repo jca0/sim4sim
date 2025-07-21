@@ -1,0 +1,32 @@
+{
+  "name": "sim4sim",
+  "version": "1.0.0",
+  "description": "A lightweight web application for setting up 3D simulation environments",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "serve": "python3 -m http.server 8000",
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "simulation",
+    "3d",
+    "threejs",
+    "robotics",
+    "urdf",
+    "stl",
+    "environment-builder"
+  ],
+  "author": "Sim4Sim Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/sim4sim.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/sim4sim/issues"
+  },
+  "homepage": "https://github.com/yourusername/sim4sim#readme"
+} 
