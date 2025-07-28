@@ -1,6 +1,6 @@
 # Sim4Sim - Simulation Environment Builder
 
-A lightweight web application for setting up 3D simulation environments. Build, arrange, and export simulation scenes with an intuitive drag-and-drop interface.
+A lightweight Node.js web application for setting up 3D simulation environments. Build, arrange, and export simulation scenes with an intuitive drag-and-drop interface and server-side file management.
 
 ![Sim4Sim Interface](https://via.placeholder.com/800x400/667eea/ffffff?text=Sim4Sim+3D+Environment+Builder)
 
@@ -11,36 +11,42 @@ A lightweight web application for setting up 3D simulation environments. Build, 
   - `.stl` files (3D models)
   - `.xml` files (simulation configurations)
   - `.urdf` files (robot descriptions)
+- **Server-side File Management**: Files are uploaded and stored on the server
 - **Interactive Controls**: Move, rotate, and position objects in 3D space
 - **Visual Feedback**: Real-time object manipulation with transform controls
 - **Scene Export**: Generate and download XML files describing the complete scene
 - **Modern UI**: Beautiful, responsive interface with gradient styling
+- **API Endpoints**: RESTful API for file upload, download, and scene export
+- **File Persistence**: Uploaded files are stored and can be reused across sessions
 
 ## Getting Started
 
 ### Prerequisites
 
+- Node.js 14.x or higher
 - A modern web browser with WebGL support
-- Python 3.x (for local development server)
 
 ### Installation
 
 1. Clone or download this repository
 2. Navigate to the project directory
-3. Start a local server:
+3. Install dependencies:
 
 ```bash
-# Using Python (recommended)
-python3 -m http.server 8000
-
-# Or using Node.js (if you have it installed)
-npx serve .
-
-# Or using PHP
-php -S localhost:8000
+npm install
 ```
 
-4. Open your browser and navigate to `http://localhost:8000`
+4. Start the development server:
+
+```bash
+# Development mode with auto-reload
+npm run dev
+
+# Production mode
+npm start
+```
+
+5. Open your browser and navigate to `http://localhost:3000`
 
 ## Usage
 
@@ -71,14 +77,38 @@ php -S localhost:8000
    - File references and types
    - Scene metadata and timestamps
 
+## API Endpoints
+
+### File Management
+
+- `POST /api/upload` - Upload a file
+- `GET /api/files` - List all uploaded files
+- `GET /api/download/:filename` - Download a specific file
+
+### Scene Export
+
+- `POST /api/export` - Export scene as XML
+
+### Health Check
+
+- `GET /api/health` - Server health status
+
 ## Technical Details
 
 ### Architecture
 
-- **Frontend**: Pure HTML, CSS, and JavaScript
+- **Backend**: Node.js with Express.js
+- **Frontend**: HTML, CSS, and JavaScript
 - **3D Engine**: Three.js for WebGL rendering
-- **File Handling**: Browser File API for drag-and-drop
-- **No Backend Required**: Completely client-side application
+- **File Storage**: Local file system with organized uploads
+- **API**: RESTful endpoints for file management
+
+### Server Configuration
+
+- **Port**: 3000 (configurable via PORT environment variable)
+- **File Upload Limit**: 50MB per file
+- **Supported File Types**: STL, XML, URDF
+- **Upload Directory**: `./uploads/` (created automatically)
 
 ### Browser Compatibility
 
@@ -108,7 +138,7 @@ The exported XML follows this structure:
 <simulation_scene>
   <metadata>
     <created>2024-01-01T00:00:00.000Z</created>
-    <generator>Sim4Sim Environment Builder</generator>
+    <generator>Sim4Sim Environment Builder (Node.js)</generator>
     <object_count>3</object_count>
   </metadata>
   <objects>
@@ -151,6 +181,32 @@ The transform controls support three modes (automatically activated):
 - **Rotate**: Rotate objects around X, Y, Z axes
 - **Scale**: Resize objects uniformly or per-axis
 
+## Development
+
+### Project Structure
+
+```
+sim4sim/
+├── public/           # Frontend files
+│   ├── index.html    # Main HTML file
+│   └── app.js        # Frontend JavaScript
+├── uploads/          # Uploaded files (created automatically)
+├── server.js         # Express server
+├── package.json      # Dependencies and scripts
+└── README.md         # This file
+```
+
+### Available Scripts
+
+- `npm start` - Start the production server
+- `npm run dev` - Start development server with auto-reload
+- `npm run build` - Build script (no-op for this project)
+
+### Environment Variables
+
+- `PORT` - Server port (default: 3000)
+- `NODE_ENV` - Environment mode (development/production)
+
 ## Contributing
 
 1. Fork the repository
@@ -169,6 +225,7 @@ For issues, feature requests, or questions:
 - Create an issue on GitHub
 - Check the browser console for error messages
 - Ensure WebGL is enabled in your browser
+- Check server logs for backend errors
 
 ## Roadmap
 
@@ -178,3 +235,6 @@ For issues, feature requests, or questions:
 - [ ] Collaborative editing features
 - [ ] Animation timeline support
 - [ ] Physics simulation preview
+- [ ] Database integration for file persistence
+- [ ] User authentication and session management
+- [ ] Cloud storage integration

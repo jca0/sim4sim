@@ -18,8 +18,12 @@ class Sim4SimApp {
         // File loaders
         this.stlLoader = new THREE.STLLoader();
         
+        // API base URL
+        this.apiBaseUrl = window.location.origin;
+        
         this.init();
         this.setupEventListeners();
+        this.loadUploadedFiles();
     }
 
     init() {
@@ -188,28 +192,78 @@ class Sim4SimApp {
         window.addEventListener('resize', () => this.onWindowResize());
     }
 
-    handleFiles(files, dropPosition = null) {
-        Array.from(files).forEach(file => {
-            const extension = file.name.split('.').pop().toLowerCase();
+    async loadUploadedFiles() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/files`);
+            const data = await response.json();
             
-            switch (extension) {
-                case 'stl':
-                    this.loadSTLFile(file, dropPosition);
-                    break;
-                case 'xml':
-                case 'urdf':
-                    this.loadXMLFile(file, dropPosition);
-                    break;
-                default:
-                    console.warn(`Unsupported file type: ${extension}`);
+            if (data.files && data.files.length > 0) {
+                console.log('Found uploaded files:', data.files);
+                // You could add a UI to show previously uploaded files
             }
-        });
+        } catch (error) {
+            console.error('Error loading uploaded files:', error);
+        }
     }
 
-    loadSTLFile(file, position = null) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const geometry = this.stlLoader.parse(event.target.result);
+    async handleFiles(files, dropPosition = null) {
+        for (const file of Array.from(files)) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            
+            // First upload the file to the server
+            try {
+                const uploadedFile = await this.uploadFile(file);
+                if (uploadedFile) {
+                    // Then load it in the scene
+                    switch (extension) {
+                        case 'stl':
+                            await this.loadSTLFile(uploadedFile, dropPosition);
+                            break;
+                        case 'xml':
+                        case 'urdf':
+                            await this.loadXMLFile(uploadedFile, dropPosition);
+                            break;
+                        default:
+                            console.warn(`Unsupported file type: ${extension}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error handling file:', error);
+                this.showNotification(`Error processing ${file.name}: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    async uploadFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Upload failed');
+            }
+
+            const result = await response.json();
+            this.showNotification(`File ${file.name} uploaded successfully!`, 'success');
+            return result.file;
+        } catch (error) {
+            console.error('Upload error:', error);
+            throw error;
+        }
+    }
+
+    async loadSTLFile(fileInfo, position = null) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/download/${fileInfo.filename}`);
+            const arrayBuffer = await response.arrayBuffer();
+            
+            const geometry = this.stlLoader.parse(arrayBuffer);
             
             // Center and scale the geometry
             geometry.computeBoundingBox();
@@ -232,9 +286,9 @@ class Sim4SimApp {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             mesh.userData = {
-                fileName: file.name,
+                fileName: fileInfo.originalName,
                 fileType: 'stl',
-                originalFile: file
+                serverFile: fileInfo
             };
 
             if (position) {
@@ -244,47 +298,46 @@ class Sim4SimApp {
 
             this.scene.add(mesh);
             this.addToSceneObjects(mesh);
-        };
-        reader.readAsArrayBuffer(file);
+        } catch (error) {
+            console.error('Error loading STL file:', error);
+            throw error;
+        }
     }
 
-    loadXMLFile(file, position = null) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(event.target.result, 'text/xml');
-                
-                // Create a visual representation for XML/URDF files
-                const geometry = new THREE.BoxGeometry(1, 1, 1);
-                const material = new THREE.MeshPhongMaterial({ 
-                    color: file.name.includes('.urdf') ? 0xff6b6b : 0x4ecdc4,
-                    transparent: true,
-                    opacity: 0.8
-                });
-                
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                mesh.userData = {
-                    fileName: file.name,
-                    fileType: file.name.split('.').pop().toLowerCase(),
-                    xmlContent: event.target.result,
-                    originalFile: file
-                };
+    async loadXMLFile(fileInfo, position = null) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/download/${fileInfo.filename}`);
+            const xmlContent = await response.text();
+            
+            // Create a visual representation for XML/URDF files
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: fileInfo.originalName.includes('.urdf') ? 0xff6b6b : 0x4ecdc4,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.userData = {
+                fileName: fileInfo.originalName,
+                fileType: fileInfo.originalName.split('.').pop().toLowerCase(),
+                xmlContent: xmlContent,
+                serverFile: fileInfo
+            };
 
-                if (position) {
-                    mesh.position.copy(position);
-                    mesh.position.y += 0.5; // Place on ground
-                }
-
-                this.scene.add(mesh);
-                this.addToSceneObjects(mesh);
-            } catch (error) {
-                console.error('Error parsing XML file:', error);
+            if (position) {
+                mesh.position.copy(position);
+                mesh.position.y += 0.5; // Place on ground
             }
-        };
-        reader.readAsText(file);
+
+            this.scene.add(mesh);
+            this.addToSceneObjects(mesh);
+        } catch (error) {
+            console.error('Error loading XML file:', error);
+            throw error;
+        }
     }
 
     addToSceneObjects(object) {
@@ -414,7 +467,7 @@ class Sim4SimApp {
         this.renderer.render(this.scene, this.camera);
     }
 
-    exportScene() {
+    async exportScene() {
         const sceneData = {
             objects: this.sceneObjects.map(obj => ({
                 fileName: obj.userData.fileName,
@@ -437,59 +490,95 @@ class Sim4SimApp {
             }))
         };
 
-        // Generate XML
-        const xml = this.generateSceneXML(sceneData);
-        
-        // Download file
-        const blob = new Blob([xml], { type: 'application/xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'simulation_scene.xml';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/export`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(sceneData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Export failed');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'simulation_scene.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            this.showNotification('Scene exported successfully!', 'success');
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('Export failed: ' + error.message, 'error');
+        }
     }
 
-    generateSceneXML(sceneData) {
-        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        xml += '<simulation_scene>\n';
-        xml += '  <metadata>\n';
-        xml += `    <created>${new Date().toISOString()}</created>\n`;
-        xml += `    <generator>Sim4Sim Environment Builder</generator>\n`;
-        xml += `    <object_count>${sceneData.objects.length}</object_count>\n`;
-        xml += '  </metadata>\n';
-        xml += '  <objects>\n';
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+            word-wrap: break-word;
+        `;
 
-        sceneData.objects.forEach((obj, index) => {
-            xml += `    <object id="${index}">\n`;
-            xml += `      <name>${obj.fileName}</name>\n`;
-            xml += `      <type>${obj.fileType}</type>\n`;
-            xml += '      <transform>\n';
-            xml += '        <position>\n';
-            xml += `          <x>${obj.position.x.toFixed(6)}</x>\n`;
-            xml += `          <y>${obj.position.y.toFixed(6)}</y>\n`;
-            xml += `          <z>${obj.position.z.toFixed(6)}</z>\n`;
-            xml += '        </position>\n';
-            xml += '        <rotation>\n';
-            xml += `          <x>${obj.rotation.x.toFixed(6)}</x>\n`;
-            xml += `          <y>${obj.rotation.y.toFixed(6)}</y>\n`;
-            xml += `          <z>${obj.rotation.z.toFixed(6)}</z>\n`;
-            xml += '        </rotation>\n';
-            xml += '        <scale>\n';
-            xml += `          <x>${obj.scale.x.toFixed(6)}</x>\n`;
-            xml += `          <y>${obj.scale.y.toFixed(6)}</y>\n`;
-            xml += `          <z>${obj.scale.z.toFixed(6)}</z>\n`;
-            xml += '        </scale>\n';
-            xml += '      </transform>\n';
-            xml += '    </object>\n';
-        });
+        // Set background color based on type
+        switch (type) {
+            case 'success':
+                notification.style.backgroundColor = '#4caf50';
+                break;
+            case 'error':
+                notification.style.backgroundColor = '#f44336';
+                break;
+            case 'warning':
+                notification.style.backgroundColor = '#ff9800';
+                break;
+            default:
+                notification.style.backgroundColor = '#2196f3';
+        }
 
-        xml += '  </objects>\n';
-        xml += '</simulation_scene>';
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
 
-        return xml;
+        document.body.appendChild(notification);
+
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
     }
 }
 
