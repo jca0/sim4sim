@@ -2,28 +2,13 @@
 
 import { useMemo } from "react";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
-
-function NumberInput({
-  value,
-  onChange,
-  step = 0.01,
-  className = "",
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  step?: number;
-  className?: string;
-}) {
-  return (
-    <input
-      type="number"
-      value={Number.isFinite(value) ? value : 0}
-      step={step}
-      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      className={`w-full border rounded px-2 py-1 bg-transparent text-xs ${className}`}
-    />
-  );
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Settings, Move, RotateCw, Ruler, Shapes } from "lucide-react";
 
 function SliderWithInput({
   value,
@@ -41,23 +26,27 @@ function SliderWithInput({
   label?: string;
 }) {
   return (
-    <div className="space-y-1">
-      {label && <div className="text-[10px] uppercase opacity-60">{label}</div>}
-      <div className="flex items-center gap-2">
-        <input
-          type="range"
+    <div className="space-y-2">
+      {label && (
+        <Label className="text-xs font-medium text-muted-foreground">
+          {label}
+        </Label>
+      )}
+      <div className="flex items-center space-x-3">
+        <Slider
+          value={[Number.isFinite(value) ? value : 0]}
+          onValueChange={([newValue]) => onChange(newValue)}
           min={min}
           max={max}
           step={step}
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          className="flex-1"
         />
-        <NumberInput
-          value={value}
-          onChange={onChange}
+        <Input
+          type="number"
+          value={Number.isFinite(value) ? value.toFixed(2) : "0.00"}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           step={step}
-          className="w-16 text-center"
+          className="w-20 text-xs text-center"
         />
       </div>
     </div>
@@ -66,16 +55,22 @@ function SliderWithInput({
 
 // Convert quaternion [w, x, y, z] to Euler angles [x, y, z] in radians  
 function quatToEuler(quat: [number, number, number, number]): [number, number, number] {
-  const [w, x, y, z] = quat;
+  // Validate and normalize quaternion to prevent NaN
+  const safeQuat = quat.map(v => Number.isFinite(v) ? v : 0);
+  const magnitude = Math.sqrt(safeQuat.reduce((sum, v) => sum + v * v, 0));
+  const normalizedQuat = magnitude > 0 ? safeQuat.map(v => v / magnitude) : [1, 0, 0, 0];
+  const [w, x, y, z] = normalizedQuat;
   
   // Roll (x-axis rotation)
   const sinr_cosp = 2 * (w * x + y * z);
   const cosr_cosp = 1 - 2 * (x * x + y * y);
   const roll = Math.atan2(sinr_cosp, cosr_cosp);
 
-  // Pitch (y-axis rotation)
-  const sinp = Math.sqrt(1 + 2 * (w * y - x * z));
-  const cosp = Math.sqrt(1 - 2 * (w * y - x * z));
+  // Pitch (y-axis rotation) - clamp to prevent NaN in sqrt
+  const sinp_arg = Math.max(-1, Math.min(1, 1 + 2 * (w * y - x * z)));
+  const cosp_arg = Math.max(-1, Math.min(1, 1 - 2 * (w * y - x * z)));
+  const sinp = Math.sqrt(Math.max(0, sinp_arg));
+  const cosp = Math.sqrt(Math.max(0, cosp_arg));
   const pitch = 2 * Math.atan2(sinp, cosp) - Math.PI / 2;
 
   // Yaw (z-axis rotation)
@@ -83,12 +78,18 @@ function quatToEuler(quat: [number, number, number, number]): [number, number, n
   const cosy_cosp = 1 - 2 * (y * y + z * z);
   const yaw = Math.atan2(siny_cosp, cosy_cosp);
 
-  return [roll, pitch, yaw];
+  return [
+    Number.isFinite(roll) ? roll : 0,
+    Number.isFinite(pitch) ? pitch : 0,
+    Number.isFinite(yaw) ? yaw : 0
+  ];
 }
 
 // Convert Euler angles [x, y, z] in radians to quaternion [w, x, y, z]
 function eulerToQuat(euler: [number, number, number]): [number, number, number, number] {
-  const [roll, pitch, yaw] = euler;
+  // Validate Euler angles to prevent NaN
+  const safeEuler = euler.map(v => Number.isFinite(v) ? v : 0) as [number, number, number];
+  const [roll, pitch, yaw] = safeEuler;
   
   const cr = Math.cos(roll * 0.5);
   const sr = Math.sin(roll * 0.5);
@@ -102,7 +103,12 @@ function eulerToQuat(euler: [number, number, number]): [number, number, number, 
   const y = cr * sp * cy + sr * cp * sy;
   const z = cr * cp * sy - sr * sp * cy;
 
-  return [w, x, y, z];
+  return [
+    Number.isFinite(w) ? w : 1,
+    Number.isFinite(x) ? x : 0,
+    Number.isFinite(y) ? y : 0,
+    Number.isFinite(z) ? z : 0
+  ];
 }
 
 export default function Inspector() {
@@ -118,10 +124,19 @@ export default function Inspector() {
 
   if (!node) {
     return (
-      <div className="p-3 border-t">
-        <div className="text-sm font-semibold opacity-70 mb-2">Inspector</div>
-        <div className="text-xs opacity-60">Select a body to edit.</div>
-      </div>
+      <Card className="border-0 shadow-none">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center">
+            <Settings className="mr-2 h-4 w-4" />
+            Inspector
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Select a body to edit its properties.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -137,6 +152,7 @@ export default function Inspector() {
     const quat = eulerToQuat(euler);
     updateTransform(node.id, node.pos, quat);
   };
+  
   const setSize = (i: number, v: number) => {
     node.geom.size[i] = v;
     rebuildXml();
@@ -144,94 +160,133 @@ export default function Inspector() {
 
   const sizeLabels =
     node.geom.type === "box"
-      ? ["sx", "sy", "sz"]
+      ? ["Width", "Height", "Depth"]
       : node.geom.type === "sphere"
-      ? ["r"]
-      : ["r", "halfheight"]; // capsule/cylinder
+      ? ["Radius"]
+      : ["Radius", "Half Height"]; // capsule/cylinder
 
   return (
-    <div className="p-3 border-t space-y-3">
-      <div className="text-sm font-semibold opacity-70">Inspector</div>
-
-      <div>
-        <div className="text-xs opacity-70 mb-1">Body name</div>
-        <div className="text-xs font-mono">{node.name}</div>
-      </div>
-
-      <div>
-        <div className="text-xs opacity-70 mb-2">Transform Controls</div>
-        <div className="text-xs opacity-50 mb-2">
-          Use buttons above 3D view to switch between Move/Rotate/Scale modes
-          <br />
-          <span className="opacity-30">(T/R/S keys also work)</span>
-        </div>
-      </div>
-
-      <div>
-        <div className="text-xs opacity-70 mb-2">Position</div>
+    <Card className="h-full flex flex-col border-0 shadow-none">
+      <CardHeader className="pb-3 flex-shrink-0">
+        <CardTitle className="text-sm flex items-center">
+          <Settings className="mr-2 h-4 w-4" />
+          Inspector
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-auto space-y-4">
+        {/* Body Info */}
         <div className="space-y-2">
-          <SliderWithInput 
-            value={node.pos[0]} 
-            onChange={(v) => setPos(0, v)} 
-            min={-10} 
-            max={10} 
-            step={0.01}
-            label="X"
-          />
-          <SliderWithInput 
-            value={node.pos[1]} 
-            onChange={(v) => setPos(1, v)} 
-            min={-10} 
-            max={10} 
-            step={0.01}
-            label="Y"
-          />
-          <SliderWithInput 
-            value={node.pos[2]} 
-            onChange={(v) => setPos(2, v)} 
-            min={-10} 
-            max={10} 
-            step={0.01}
-            label="Z"
-          />
+          <Label className="text-xs font-medium text-muted-foreground">Body Name</Label>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="font-mono text-xs">
+              {node.name}
+            </Badge>
+          </div>
         </div>
-      </div>
 
-      <div>
-        <div className="text-xs opacity-70 mb-2">Rotation (degrees)</div>
+        <Separator />
+
+        {/* Transform Controls Info */}
         <div className="space-y-2">
-          {quatToEuler(node.quat).map((angle, i) => (
-            <SliderWithInput
-              key={i}
-              value={angle * (180 / Math.PI)} // Convert radians to degrees
-              onChange={(v) => setEuler(i, v * (Math.PI / 180))} // Convert degrees to radians
-              min={-180}
-              max={180}
-              step={1}
-              label={['Roll', 'Pitch', 'Yaw'][i]}
-            />
-          ))}
+          <Label className="text-xs font-medium flex items-center">
+            <Move className="mr-1 h-3 w-3" />
+            Transform Controls
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Use buttons above 3D view to switch between Move/Rotate/Scale modes
+            <br />
+            <span className="opacity-60">(T/R/S keyboard shortcuts)</span>
+          </p>
         </div>
-      </div>
 
-      <div>
-        <div className="text-xs opacity-70 mb-2">Geometry: {node.geom.type}</div>
-        <div className="space-y-2">
-          {sizeLabels.map((label, i) => (
-            <SliderWithInput
-              key={label}
-              value={node.geom.size[i] ?? 0}
-              onChange={(v) => setSize(i, v)}
-              min={0.01}
-              max={2}
+        <Separator />
+
+        {/* Position */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center">
+            <Move className="mr-2 h-4 w-4" />
+            Position
+          </Label>
+          <div className="space-y-3">
+            <SliderWithInput 
+              value={node.pos[0]} 
+              onChange={(v) => setPos(0, v)} 
+              min={-10} 
+              max={10} 
               step={0.01}
-              label={label}
+              label="X"
             />
-          ))}
+            <SliderWithInput 
+              value={node.pos[1]} 
+              onChange={(v) => setPos(1, v)} 
+              min={-10} 
+              max={10} 
+              step={0.01}
+              label="Y"
+            />
+            <SliderWithInput 
+              value={node.pos[2]} 
+              onChange={(v) => setPos(2, v)} 
+              min={-10} 
+              max={10} 
+              step={0.01}
+              label="Z"
+            />
+          </div>
         </div>
 
-      </div>
-    </div>
+        <Separator />
+
+        {/* Rotation */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center">
+            <RotateCw className="mr-2 h-4 w-4" />
+            Rotation (degrees)
+          </Label>
+          <div className="space-y-3">
+            {quatToEuler(node.quat).map((angle, i) => (
+              <SliderWithInput
+                key={i}
+                value={angle * (180 / Math.PI)} // Convert radians to degrees
+                onChange={(v) => setEuler(i, v * (Math.PI / 180))} // Convert degrees to radians
+                min={-180}
+                max={180}
+                step={1}
+                label={['Roll', 'Pitch', 'Yaw'][i]}
+              />
+            ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Geometry */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm font-medium flex items-center">
+              <Shapes className="mr-2 h-4 w-4" />
+              Geometry
+            </Label>
+            <Badge variant="outline" className="capitalize">
+              {node.geom.type}
+            </Badge>
+          </div>
+          <div className="space-y-3">
+            {sizeLabels.map((label, i) => (
+              <SliderWithInput
+                key={label}
+                value={node.geom.size[i] ?? 0}
+                onChange={(v) => setSize(i, v)}
+                min={0.01}
+                max={2}
+                step={0.01}
+                label={label}
+              />
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

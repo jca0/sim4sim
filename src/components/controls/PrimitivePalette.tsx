@@ -1,29 +1,42 @@
 "use client";
 
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
-
-const Button: React.FC<{
-  onClick: () => void;
-  children: React.ReactNode;
-}> = ({ onClick, children }) => (
-  <button
-    onClick={onClick}
-    className="w-full text-left border rounded px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10"
-  >
-    {children}
-  </button>
-);
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Circle, Square, Cylinder, Pill } from "lucide-react";
 
 export default function PrimitivePalette() {
   const addPrimitive = useMjcfEditorStore((s) => s.addPrimitive);
+  
+  const primitives = [
+    { type: "sphere", label: "Sphere", icon: Circle },
+    { type: "box", label: "Box", icon: Square },
+    { type: "capsule", label: "Capsule", icon: Pill },
+    { type: "cylinder", label: "Cylinder", icon: Cylinder }
+  ] as const;
+
   return (
-    <div className="flex flex-col gap-2 p-3">
-      <div className="text-sm font-semibold opacity-70">Add primitives</div>
-      <Button onClick={() => addPrimitive("sphere")}>Sphere</Button>
-      <Button onClick={() => addPrimitive("box")}>Box</Button>
-      <Button onClick={() => addPrimitive("capsule")}>Capsule</Button>
-      <Button onClick={() => addPrimitive("cylinder")}>Cylinder</Button>
-    </div>
+    <Card className="border-0 shadow-none">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm">Add Primitives</CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-2 gap-2">
+        {primitives.map((primitive) => {
+          const IconComponent = primitive.icon;
+          return (
+            <Button
+              key={primitive.type}
+              variant="outline"
+              className="h-16 flex-col justify-center gap-1 text-xs"
+              onClick={() => addPrimitive(primitive.type)}
+            >
+              <IconComponent className="h-5 w-5" />
+              {primitive.label}
+            </Button>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
 

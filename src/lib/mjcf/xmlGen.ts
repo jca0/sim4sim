@@ -6,17 +6,20 @@ const formatNumbers = (arr: number[]): string =>
 const escapeAttr = (v: string): string => v.replace(/\"/g, "&quot;");
 
 export function buildMjcfXml(nodes: BodyNode[], modelName = "scene"): string {
+  // Ground plane as a static geometry
+  const groundPlane = `    <geom name="ground" type="plane" size="10 10 0.1" pos="0 0 0" rgba="0.9 0.9 0.9 1"/>`;
+  
   const bodies = nodes
     .map((n) => {
       const pos = formatNumbers(n.pos);
       const quat = formatNumbers(n.quat);
       const size = formatNumbers(n.geom.size);
       const rgba = n.geom.rgba ? ` rgba="${formatNumbers(n.geom.rgba)}"` : "";
-      return `  <body name="${escapeAttr(n.name)}" pos="${pos}" quat="${quat}">\n    <geom type="${n.geom.type}" size="${size}"${rgba}/>\n  </body>`;
+      return `    <body name="${escapeAttr(n.name)}" pos="${pos}" quat="${quat}">\n      <geom type="${n.geom.type}" size="${size}"${rgba}/>\n    </body>`;
     })
     .join("\n");
 
-  return `<?xml version="1.0"?>\n<mujoco model="${escapeAttr(modelName)}">\n  <compiler angle="degree" coordinate="local"/>\n  <worldbody>\n${bodies}\n  </worldbody>\n</mujoco>\n`;
+  const worldbodyContent = [groundPlane, bodies].filter(Boolean).join("\n");
+  
+  return `<?xml version="1.0"?>\n<mujoco model="${escapeAttr(modelName)}">\n  <compiler angle="degree" coordinate="local"/>\n  <worldbody>\n${worldbodyContent}\n  </worldbody>\n</mujoco>\n`;
 }
-
-
