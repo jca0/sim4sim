@@ -6,8 +6,14 @@ const formatNumbers = (arr: number[]): string =>
 const escapeAttr = (v: string): string => v.replace(/\"/g, "&quot;");
 
 export function buildMjcfXml(nodes: BodyNode[], modelName = "scene"): string {
-  // Ground plane as a static geometry
-  const groundPlane = `    <geom name="ground" type="plane" size="10 10 0.1" pos="0 0 0" rgba="0.9 0.9 0.9 1"/>`;
+  // Texture and material definitions for ground plane
+  const assets = `  <asset>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"/>
+  </asset>`;
+
+  // Ground plane as a static geometry with material
+  const groundPlane = `    <geom name="ground" type="plane" size="10 10 0.1" pos="0 0 0" material="groundplane"/>`;
   
   const bodies = nodes
     .map((n) => {
@@ -21,5 +27,5 @@ export function buildMjcfXml(nodes: BodyNode[], modelName = "scene"): string {
 
   const worldbodyContent = [groundPlane, bodies].filter(Boolean).join("\n");
   
-  return `<?xml version="1.0"?>\n<mujoco model="${escapeAttr(modelName)}">\n  <compiler angle="degree" coordinate="local"/>\n  <worldbody>\n${worldbodyContent}\n  </worldbody>\n</mujoco>\n`;
+  return `<?xml version="1.0"?>\n<mujoco model="${escapeAttr(modelName)}">\n  <compiler angle="degree" coordinate="local"/>\n${assets}\n  <worldbody>\n${worldbodyContent}\n  </worldbody>\n</mujoco>\n`;
 }
