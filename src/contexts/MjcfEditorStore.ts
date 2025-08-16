@@ -18,6 +18,9 @@ type EditorState = {
   select: (id: string | null) => void;
   rebuildXml: () => void;
   reset: () => void;
+  deleteSelected: () => void;
+  undo: () => void;
+  redo: () => void;
 };
 
 let counter = 0;
@@ -27,7 +30,44 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
   nodes: [],
   selection: null,
   xml: buildMjcfXml([]),
+  // Internal undo/redo stacks kept in closure
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...((): any => {
+    type Snapshot = { nodes: BodyNode[]; selection: string | null; xml: string };
+    const undoStack: Snapshot[] = [];
+    const redoStack: Snapshot[] = [];
+
+    const takeSnapshot = (): Snapshot => {
+      const { nodes, selection, xml } = get();
+      return {
+        nodes: JSON.parse(JSON.stringify(nodes)) as BodyNode[],
+        selection,
+        xml,
+      };
+    };
+
+    const pushUndo = () => {
+      undoStack.push(takeSnapshot());
+      if (undoStack.length > 100) undoStack.shift();
+      // Clear redo stack on new user action (branching)
+      redoStack.length = 0;
+    };
+
+    const applySnapshot = (snap: Snapshot) => {
+      set({ nodes: snap.nodes, selection: snap.selection, xml: snap.xml });
+    };
+
+    return {
+      __undoStack: undoStack,
+      __redoStack: redoStack,
+      __pushUndo: pushUndo,
+      __takeSnapshot: takeSnapshot,
+      __applySnapshot: applySnapshot,
+    };
+  })(),
   addPrimitive: (type) => {
+    // @ts-expect-error internal helper in closure
+    get().__pushUndo();
     const id = nextId("body");
     const name = id;
     const defaultByType: Record<GeomType, number[]> = {
@@ -48,6 +88,8 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     set({ nodes, selection: id, xml });
   },
   updateTransform: (id, pos, quat) => {
+    // @ts-expect-error internal helper in closure
+    get().__pushUndo();
     // Validate position values
     const safePos: [number, number, number] = [
       Number.isFinite(pos[0]) ? pos[0] : 0,
@@ -67,6 +109,8 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     set({ nodes, xml });
   },
   updateScale: (id, scale) => {
+    // @ts-expect-error internal helper in closure
+    get().__pushUndo();
     const nodes = get().nodes.map((n) => {
       if (n.id !== id) return n;
       
@@ -101,7 +145,48 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
   },
   select: (id) => set({ selection: id }),
   rebuildXml: () => set({ xml: buildMjcfXml(get().nodes) }),
-  reset: () => set({ nodes: [], selection: null, xml: buildMjcfXml([]) }),
+  reset: () => {
+    // @ts-expect-error internal helper in closure
+    get().__pushUndo();
+    set({ nodes: [], selection: null, xml: buildMjcfXml([]) });
+  },
+  deleteSelected: () => {
+    const selectedId = get().selection;
+    if (!selectedId) return;
+    // @ts-expect-error internal helper in closure
+    get().__pushUndo();
+    const nodes = get().nodes.filter((n) => n.id !== selectedId);
+    const xml = buildMjcfXml(nodes);
+    set({ nodes, selection: null, xml });
+  },
+  undo: () => {
+    // @ts-expect-error internal stacks in closure
+    const undoStack = get().__undoStack as Array<{ nodes: BodyNode[]; selection: string | null; xml: string }>;
+    // @ts-expect-error internal stacks in closure
+    const redoStack = get().__redoStack as Array<{ nodes: BodyNode[]; selection: string | null; xml: string }>;
+    if (!undoStack.length) return;
+    const current = get().__takeSnapshot();
+    const prev = undoStack.pop();
+    if (!prev) return;
+    redoStack.push(current);
+    if (redoStack.length > 100) redoStack.shift();
+    // @ts-expect-error internal helper in closure
+    get().__applySnapshot(prev);
+  },
+  redo: () => {
+    // @ts-expect-error internal stacks in closure
+    const undoStack = get().__undoStack as Array<{ nodes: BodyNode[]; selection: string | null; xml: string }>;
+    // @ts-expect-error internal stacks in closure
+    const redoStack = get().__redoStack as Array<{ nodes: BodyNode[]; selection: string | null; xml: string }>;
+    if (!redoStack.length) return;
+    const current = get().__takeSnapshot();
+    const next = redoStack.pop();
+    if (!next) return;
+    undoStack.push(current);
+    if (undoStack.length > 100) undoStack.shift();
+    // @ts-expect-error internal helper in closure
+    get().__applySnapshot(next);
+  },
 }));
 
 

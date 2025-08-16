@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from 'react';
+import { DoubleSide } from 'three';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import { useMeshRegistry } from '@/hooks/useMeshRegistry';
@@ -71,7 +72,7 @@ export function Scene({ transformMode }: SceneProps) {
         receiveShadow
       >
         <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial color="#f3f4f6" transparent opacity={0.8} />
+        <meshStandardMaterial color="#f3f4f6" transparent opacity={0.6} side={DoubleSide} />
       </mesh>
 
       {/* Transform controls for selected object */}
