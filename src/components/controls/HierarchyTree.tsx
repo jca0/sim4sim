@@ -27,7 +27,7 @@ export default function HierarchyTree() {
               <Button
                 key={n.id}
                 variant={selection === n.id ? "secondary" : "ghost"}
-                className="w-full justify-start h-auto p-2"
+                className="w-full justify-start h-auto p-2 cursor-pointer hover:scale-[1.02] transition-transform"
                 onClick={() => select(n.id)}
               >
                 <Box className="mr-2 h-3 w-3 shrink-0" />

@@ -34,7 +34,7 @@ export function TransformModeButtons({
               key={mode.key}
               value={mode.key}
               aria-label={mode.label}
-              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground cursor-pointer hover:scale-105 transition-transform"
             >
               <IconComponent className="h-4 w-4" />
               <span className="ml-2">{mode.label}</span>

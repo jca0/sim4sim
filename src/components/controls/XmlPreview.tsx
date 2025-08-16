@@ -30,7 +30,7 @@ export default function XmlPreview() {
           onClick={download}
           size="sm"
           variant="outline"
-          className="h-8"
+          className="h-8 cursor-pointer hover:scale-105 transition-transform"
         >
           <Download className="mr-2 h-3 w-3" />
           Download

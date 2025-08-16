@@ -48,7 +48,21 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     set({ nodes, selection: id, xml });
   },
   updateTransform: (id, pos, quat) => {
-    const nodes = get().nodes.map((n) => (n.id === id ? { ...n, pos, quat } : n));
+    // Validate position values
+    const safePos: [number, number, number] = [
+      Number.isFinite(pos[0]) ? pos[0] : 0,
+      Number.isFinite(pos[1]) ? pos[1] : 0,
+      Number.isFinite(pos[2]) ? pos[2] : 0
+    ];
+    
+    // Validate and normalize quaternion
+    const safeQuat = quat.map(q => Number.isFinite(q) ? q : 0);
+    const quatMagnitude = Math.sqrt(safeQuat.reduce((sum, q) => sum + q * q, 0));
+    const normalizedQuat: [number, number, number, number] = quatMagnitude > 0
+      ? safeQuat.map(q => q / quatMagnitude) as [number, number, number, number]
+      : [1, 0, 0, 0]; // Identity quaternion if invalid
+    
+    const nodes = get().nodes.map((n) => (n.id === id ? { ...n, pos: safePos, quat: normalizedQuat } : n));
     const xml = buildMjcfXml(nodes);
     set({ nodes, xml });
   },
@@ -56,21 +70,29 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     const nodes = get().nodes.map((n) => {
       if (n.id !== id) return n;
       
+      // Validate scale values to prevent NaN propagation
+      const safeScale = scale.map(s => Number.isFinite(s) ? Math.max(0.001, s) : 1);
+      
       // Update geometry size based on scale and geometry type
       let newSize = [...n.geom.size];
       if (n.geom.type === 'sphere') {
         // sphere: [r] -> scale uniformly
-        newSize[0] = newSize[0] * Math.max(scale[0], scale[1], scale[2]);
+        const uniformScale = Math.max(safeScale[0], safeScale[1], safeScale[2]);
+        newSize[0] = Math.max(0.001, (n.geom.size[0] || 0.1) * uniformScale);
       } else if (n.geom.type === 'box') {
         // box: [sx, sy, sz] -> scale each dimension
-        newSize[0] = newSize[0] * scale[0];
-        newSize[1] = newSize[1] * scale[1]; 
-        newSize[2] = newSize[2] * scale[2];
+        newSize[0] = Math.max(0.001, (n.geom.size[0] || 0.1) * safeScale[0]);
+        newSize[1] = Math.max(0.001, (n.geom.size[1] || 0.1) * safeScale[1]); 
+        newSize[2] = Math.max(0.001, (n.geom.size[2] || 0.1) * safeScale[2]);
       } else if (n.geom.type === 'capsule' || n.geom.type === 'cylinder') {
         // capsule/cylinder: [r, halfheight] -> radius from x/z, height from y
-        newSize[0] = newSize[0] * Math.max(scale[0], scale[2]);
-        newSize[1] = newSize[1] * scale[1];
+        const radialScale = Math.max(safeScale[0], safeScale[2]);
+        newSize[0] = Math.max(0.001, (n.geom.size[0] || 0.05) * radialScale);
+        newSize[1] = Math.max(0.001, (n.geom.size[1] || 0.2) * safeScale[1]);
       }
+      
+      // Ensure all new size values are finite
+      newSize = newSize.map(s => Number.isFinite(s) ? s : 0.1);
       
       return { ...n, geom: { ...n.geom, size: newSize } };
     });

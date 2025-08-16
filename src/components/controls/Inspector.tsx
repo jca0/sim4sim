@@ -46,7 +46,7 @@ function SliderWithInput({
           value={Number.isFinite(value) ? value.toFixed(2) : "0.00"}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           step={step}
-          className="w-20 text-xs text-center"
+          className="w-20 text-xs text-center cursor-text hover:border-primary/50 transition-colors"
         />
       </div>
     </div>
@@ -182,21 +182,6 @@ export default function Inspector() {
               {node.name}
             </Badge>
           </div>
-        </div>
-
-        <Separator />
-
-        {/* Transform Controls Info */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium flex items-center">
-            <Move className="mr-1 h-3 w-3" />
-            Transform Controls
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Use buttons above 3D view to switch between Move/Rotate/Scale modes
-            <br />
-            <span className="opacity-60">(T/R/S keyboard shortcuts)</span>
-          </p>
         </div>
 
         <Separator />

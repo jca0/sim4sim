@@ -27,7 +27,7 @@ export default function PrimitivePalette() {
             <Button
               key={primitive.type}
               variant="outline"
-              className="h-16 flex-col justify-center gap-1 text-xs"
+              className="h-16 flex-col justify-center gap-1 text-xs cursor-pointer hover:scale-105 transition-transform"
               onClick={() => addPrimitive(primitive.type)}
             >
               <IconComponent className="h-5 w-5" />
