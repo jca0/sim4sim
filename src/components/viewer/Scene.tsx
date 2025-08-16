@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from 'react';
-import { OrbitControls, Grid } from '@react-three/drei';
+import { useRef, useMemo } from 'react';
+import { OrbitControls } from '@react-three/drei';
+import * as THREE from 'three';
 import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import { useMeshRegistry } from '@/hooks/useMeshRegistry';
 import { GeometryMesh } from './GeometryMesh';
@@ -22,6 +23,33 @@ export function Scene({ transformMode }: SceneProps) {
     handleCanvasClick
   } = useMeshRegistry();
 
+  const checkerTexture = useMemo(() => {
+    const size = 512;
+    const squaresPerSide = 16;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const squareSize = size / squaresPerSide;
+    const colorA = '#e5e7eb';
+    const colorB = '#d1d5db';
+    for (let y = 0; y < squaresPerSide; y++) {
+      for (let x = 0; x < squaresPerSide; x++) {
+        ctx.fillStyle = (x + y) % 2 === 0 ? colorA : colorB;
+        ctx.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
+      }
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(10, 10);
+    texture.anisotropy = 16;
+    texture.magFilter = THREE.NearestFilter;
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+
   return (
     <>
       {/* Lighting */}
@@ -38,21 +66,7 @@ export function Scene({ transformMode }: SceneProps) {
         shadow-camera-bottom={-10}
       />
       
-      {/* Ground grid */}
-      <Grid 
-        args={[20, 20]} 
-        position={[0, -0.01, 0]}
-        cellSize={1}
-        cellThickness={0.6}
-        cellColor={'#6b7280'}
-        sectionSize={5}
-        sectionThickness={1.5}
-        sectionColor={'#374151'}
-        fadeDistance={25}
-        fadeStrength={1}
-        followCamera={false}
-        infiniteGrid={true}
-      />
+      {/* Ground plane (checkered, visible from below) */}
 
       {/* Render all geometry nodes */}
       {nodes.map((node) => (
@@ -63,15 +77,19 @@ export function Scene({ transformMode }: SceneProps) {
         />
       ))}
 
-      {/* Ground plane for shadows */}
       <mesh 
-        position={[0, -0.005, 0]} 
+        position={[0, 0, 0]} 
         rotation={[-Math.PI / 2, 0, 0]}
         onClick={handleCanvasClick}
         receiveShadow
       >
         <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial color="#f3f4f6" transparent opacity={0.8} />
+        <meshStandardMaterial 
+          map={checkerTexture as any}
+          transparent 
+          opacity={0.85} 
+          side={THREE.DoubleSide}
+        />
       </mesh>
 
       {/* Transform controls for selected object */}
