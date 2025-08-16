@@ -3,21 +3,10 @@ import PrimitivePalette from "@/components/controls/PrimitivePalette";
 import HierarchyTree from "@/components/controls/HierarchyTree";
 import XmlPreview from "@/components/controls/XmlPreview";
 import Inspector from "@/components/controls/Inspector";
+import MujocoViewer from "@/components/MujocoViewer";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
-import { useEffect } from "react";
 
-// Placeholder center panel until MuJoCo viewer wiring is added
-function CenterPlaceholder() {
-  const selection = useMjcfEditorStore((s) => s.selection);
-  useEffect(() => {
-    // Future: push XML to iframe here.
-  }, [selection]);
-  return (
-    <div className="w-full h-full flex items-center justify-center text-sm opacity-60">
-      MuJoCo viewer placeholder — add primitives on the left, see XML on the right.
-    </div>
-  );
-}
+
 
 export default function EditorPage() {
   return (
@@ -31,7 +20,7 @@ export default function EditorPage() {
         <HierarchyTree />
       </aside>
       <main className="overflow-hidden">
-        <CenterPlaceholder />
+        <MujocoViewer />
       </main>
       <section className="border-l overflow-hidden flex flex-col">
         <XmlPreview />

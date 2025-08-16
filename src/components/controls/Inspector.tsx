@@ -19,10 +19,90 @@ function NumberInput({
       type="number"
       value={Number.isFinite(value) ? value : 0}
       step={step}
-      onChange={(e) => onChange(parseFloat(e.target.value))}
-      className={`w-full border rounded px-2 py-1 bg-transparent ${className}`}
+      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+      className={`w-full border rounded px-2 py-1 bg-transparent text-xs ${className}`}
     />
   );
+}
+
+function SliderWithInput({
+  value,
+  onChange,
+  min = -10,
+  max = 10,
+  step = 0.01,
+  label,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  label?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      {label && <div className="text-[10px] uppercase opacity-60">{label}</div>}
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={Number.isFinite(value) ? value : 0}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+        />
+        <NumberInput
+          value={value}
+          onChange={onChange}
+          step={step}
+          className="w-16 text-center"
+        />
+      </div>
+    </div>
+  );
+}
+
+// Convert quaternion [w, x, y, z] to Euler angles [x, y, z] in radians  
+function quatToEuler(quat: [number, number, number, number]): [number, number, number] {
+  const [w, x, y, z] = quat;
+  
+  // Roll (x-axis rotation)
+  const sinr_cosp = 2 * (w * x + y * z);
+  const cosr_cosp = 1 - 2 * (x * x + y * y);
+  const roll = Math.atan2(sinr_cosp, cosr_cosp);
+
+  // Pitch (y-axis rotation)
+  const sinp = Math.sqrt(1 + 2 * (w * y - x * z));
+  const cosp = Math.sqrt(1 - 2 * (w * y - x * z));
+  const pitch = 2 * Math.atan2(sinp, cosp) - Math.PI / 2;
+
+  // Yaw (z-axis rotation)
+  const siny_cosp = 2 * (w * z + x * y);
+  const cosy_cosp = 1 - 2 * (y * y + z * z);
+  const yaw = Math.atan2(siny_cosp, cosy_cosp);
+
+  return [roll, pitch, yaw];
+}
+
+// Convert Euler angles [x, y, z] in radians to quaternion [w, x, y, z]
+function eulerToQuat(euler: [number, number, number]): [number, number, number, number] {
+  const [roll, pitch, yaw] = euler;
+  
+  const cr = Math.cos(roll * 0.5);
+  const sr = Math.sin(roll * 0.5);
+  const cp = Math.cos(pitch * 0.5);
+  const sp = Math.sin(pitch * 0.5);
+  const cy = Math.cos(yaw * 0.5);
+  const sy = Math.sin(yaw * 0.5);
+
+  const w = cr * cp * cy + sr * sp * sy;
+  const x = sr * cp * cy - cr * sp * sy;
+  const y = cr * sp * cy + sr * cp * sy;
+  const z = cr * cp * sy - sr * sp * cy;
+
+  return [w, x, y, z];
 }
 
 export default function Inspector() {
@@ -50,9 +130,11 @@ export default function Inspector() {
     pos[i] = v;
     updateTransform(node.id, pos, node.quat);
   };
-  const setQuat = (i: number, v: number) => {
-    const quat = [...node.quat] as [number, number, number, number];
-    quat[i] = v;
+
+  const setEuler = (i: number, v: number) => {
+    const euler = quatToEuler(node.quat);
+    euler[i] = v;
+    const quat = eulerToQuat(euler);
     updateTransform(node.id, node.pos, quat);
   };
   const setSize = (i: number, v: number) => {
@@ -77,38 +159,77 @@ export default function Inspector() {
       </div>
 
       <div>
-        <div className="text-xs opacity-70 mb-1">Position (pos)</div>
-        <div className="grid grid-cols-3 gap-2">
-          <NumberInput value={node.pos[0]} onChange={(v) => setPos(0, v)} />
-          <NumberInput value={node.pos[1]} onChange={(v) => setPos(1, v)} />
-          <NumberInput value={node.pos[2]} onChange={(v) => setPos(2, v)} />
+        <div className="text-xs opacity-70 mb-2">Transform Controls</div>
+        <div className="text-xs opacity-50 mb-2">
+          Use buttons above 3D view to switch between Move/Rotate/Scale modes
+          <br />
+          <span className="opacity-30">(T/R/S keys also work)</span>
         </div>
       </div>
 
       <div>
-        <div className="text-xs opacity-70 mb-1">Orientation (quat w x y z)</div>
-        <div className="grid grid-cols-4 gap-2">
-          <NumberInput value={node.quat[0]} onChange={(v) => setQuat(0, v)} />
-          <NumberInput value={node.quat[1]} onChange={(v) => setQuat(1, v)} />
-          <NumberInput value={node.quat[2]} onChange={(v) => setQuat(2, v)} />
-          <NumberInput value={node.quat[3]} onChange={(v) => setQuat(3, v)} />
+        <div className="text-xs opacity-70 mb-2">Position</div>
+        <div className="space-y-2">
+          <SliderWithInput 
+            value={node.pos[0]} 
+            onChange={(v) => setPos(0, v)} 
+            min={-10} 
+            max={10} 
+            step={0.01}
+            label="X"
+          />
+          <SliderWithInput 
+            value={node.pos[1]} 
+            onChange={(v) => setPos(1, v)} 
+            min={-10} 
+            max={10} 
+            step={0.01}
+            label="Y"
+          />
+          <SliderWithInput 
+            value={node.pos[2]} 
+            onChange={(v) => setPos(2, v)} 
+            min={-10} 
+            max={10} 
+            step={0.01}
+            label="Z"
+          />
         </div>
       </div>
 
       <div>
-        <div className="text-xs opacity-70 mb-1">Geom: {node.geom.type}</div>
-        <div className={`grid gap-2 ${sizeLabels.length === 3 ? "grid-cols-3" : sizeLabels.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
-          {sizeLabels.map((label, i) => (
-            <div key={label} className="flex flex-col gap-1">
-              <div className="text-[10px] uppercase opacity-60">{label}</div>
-              <NumberInput
-                value={node.geom.size[i] ?? 0}
-                onChange={(v) => setSize(i, v)}
-                step={0.01}
-              />
-            </div>
+        <div className="text-xs opacity-70 mb-2">Rotation (degrees)</div>
+        <div className="space-y-2">
+          {quatToEuler(node.quat).map((angle, i) => (
+            <SliderWithInput
+              key={i}
+              value={angle * (180 / Math.PI)} // Convert radians to degrees
+              onChange={(v) => setEuler(i, v * (Math.PI / 180))} // Convert degrees to radians
+              min={-180}
+              max={180}
+              step={1}
+              label={['Roll', 'Pitch', 'Yaw'][i]}
+            />
           ))}
         </div>
+      </div>
+
+      <div>
+        <div className="text-xs opacity-70 mb-2">Geometry: {node.geom.type}</div>
+        <div className="space-y-2">
+          {sizeLabels.map((label, i) => (
+            <SliderWithInput
+              key={label}
+              value={node.geom.size[i] ?? 0}
+              onChange={(v) => setSize(i, v)}
+              min={0.01}
+              max={2}
+              step={0.01}
+              label={label}
+            />
+          ))}
+        </div>
+
       </div>
     </div>
   );
