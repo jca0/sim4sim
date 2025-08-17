@@ -87,46 +87,45 @@ export default function EditorPage() {
       </header>
       <div className="relative min-h-0 h-full overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="min-h-0 h-full">
-          <ResizablePanel ref={leftRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between p-2 border-b">
-            <div className="text-xs font-medium opacity-70"></div>
-            <Button size="icon" variant="ghost" className="h-7 w-7 cursor-pointer" onClick={toggleLeft} title={isLeftCollapsed ? "Expand left" : "Collapse left"}>
-              {isLeftCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+          <ResizablePanel ref={leftRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col relative group">
+          <button
+            className="absolute top-0 right-[-4px] z-20 h-6 w-6 cursor-pointer opacity-70 hover:opacity-100 bg-transparent border-0 shadow-none inline-flex items-center justify-center"
+            onClick={toggleLeft}
+            title={isLeftCollapsed ? "Expand left" : "Collapse left"}
+          >
+            <ChevronLeft className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          </button>
           <div className="p-3 space-y-4 overflow-auto flex-1">
             <PrimitivePalette />
             <HierarchyTree />
           </div>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle />
           <ResizablePanel defaultSize={56} minSize={35} className="overflow-hidden">
           <MujocoViewer />
           </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel ref={rightRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between p-2 border-b">
-            <div className="text-xs font-medium opacity-70"></div>
-            <Button size="icon" variant="ghost" className="h-7 w-7 cursor-pointer" onClick={toggleRight} title={isRightCollapsed ? "Expand right" : "Collapse right"}>
-              {isRightCollapsed ? (
-                <ChevronLeft className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-          <div className="p-3 flex flex-col gap-4 overflow-hidden flex-1">
-            <div className="h-64 flex-shrink-0">
-              <XmlPreview />
-            </div>
-            <div className="flex-1 min-h-0">
-              <Inspector />
-            </div>
-          </div>
+          <ResizableHandle />
+          <ResizablePanel ref={rightRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col relative group">
+          <button
+            className="absolute top-0 left-[-4px] z-20 h-6 w-6 cursor-pointer opacity-70 hover:opacity-100 bg-transparent border-0 shadow-none inline-flex items-center justify-center"
+            onClick={toggleRight}
+            title={isRightCollapsed ? "Expand right" : "Collapse right"}
+          >
+            <ChevronRight className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          </button>
+          <ResizablePanelGroup direction="vertical" className="min-h-0 flex-1">
+            <ResizablePanel defaultSize={45} minSize={20}>
+              <div className="p-3 h-full overflow-auto">
+                <XmlPreview />
+              </div>
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel defaultSize={55} minSize={20}>
+              <div className="p-3 h-full overflow-auto">
+                <Inspector />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
           </ResizablePanel>
         </ResizablePanelGroup>
 
