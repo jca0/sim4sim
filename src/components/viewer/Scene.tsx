@@ -67,21 +67,7 @@ export function Scene({ transformMode }: SceneProps) {
         shadow-camera-bottom={-10}
       />
       
-      {/* Ground grid */}
-      <Grid 
-        args={[20, 20]} 
-        position={[0, -0.01, 0]}
-        cellSize={1}
-        cellThickness={0.6}
-        cellColor={'#6b7280'}
-        sectionSize={5}
-        sectionThickness={1.5}
-        sectionColor={'#374151'}
-        fadeDistance={25}
-        fadeStrength={1}
-        followCamera={false}
-        infiniteGrid={true}
-      />
+      {/* Ground plane (checkered, visible from below) */}
 
       {/* Render all geometry nodes */}
       {nodes.map((node) => (
@@ -92,9 +78,8 @@ export function Scene({ transformMode }: SceneProps) {
         />
       ))}
 
-      {/* Ground plane for shadows */}
       <mesh 
-        position={[0, -0.005, 0]} 
+        position={[0, 0, 0]} 
         rotation={[-Math.PI / 2, 0, 0]}
         onClick={handleCanvasClick}
         receiveShadow
