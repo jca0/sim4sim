@@ -21,7 +21,11 @@ export function buildMjcfXml(nodes: BodyNode[], modelName = "scene"): string {
       const quat = formatNumbers(n.quat);
       const size = formatNumbers(n.geom.size);
       const rgba = n.geom.rgba ? ` rgba="${formatNumbers(n.geom.rgba)}"` : "";
-      return `    <body name="${escapeAttr(n.name)}" pos="${pos}" quat="${quat}">\n      <geom type="${n.geom.type}" size="${size}"${rgba}/>\n    </body>`;
+      const group = n.geom.group !== undefined ? ` group="${n.geom.group}"` : "";
+      const contype = n.geom.contype !== undefined ? ` contype="${n.geom.contype}"` : "";
+      const conaffinity = n.geom.conaffinity !== undefined ? ` conaffinity="${n.geom.conaffinity}"` : "";
+      const friction = n.geom.friction ? ` friction="${formatNumbers(n.geom.friction)}"` : "";
+      return `    <body name="${escapeAttr(n.name)}" pos="${pos}" quat="${quat}">\n      <geom type="${n.geom.type}" size="${size}"${rgba}${group}${contype}${conaffinity}${friction}/>\n    </body>`;
     })
     .join("\n");
 

@@ -1,4 +1,5 @@
-- fix the text editor
-- convert components to shadcn
+
 - the primitives look weird
 - more complex bodies
+
+- make ground plane prettier

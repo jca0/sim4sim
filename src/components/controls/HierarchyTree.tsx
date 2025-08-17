@@ -19,6 +19,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { Input } from "@/components/ui/input";
 import { useMjcfEditorStore as useStore } from "@/contexts/MjcfEditorStore";
 
 export default function HierarchyTree() {
@@ -27,6 +28,28 @@ export default function HierarchyTree() {
   const select = useMjcfEditorStore((s) => s.select);
   const deleteSelected = useMjcfEditorStore((s) => s.deleteSelected);
   const renameSelected = useMjcfEditorStore((s) => s.renameSelected);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [draftName, setDraftName] = React.useState<string>("");
+
+  const startRename = (id: string, currentName: string) => {
+    select(id);
+    setEditingId(id);
+    setDraftName(currentName);
+  };
+
+  const commitRename = () => {
+    if (!editingId) return;
+    const name = draftName.trim();
+    if (name) {
+      select(editingId);
+      renameSelected(name);
+    }
+    setEditingId(null);
+  };
+
+  const cancelRename = () => {
+    setEditingId(null);
+  };
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none">
@@ -56,7 +79,21 @@ export default function HierarchyTree() {
                       <Badge variant="outline" className="mr-2 text-xs">
                         body
                       </Badge>
-                      <span className="font-mono text-xs truncate">{n.name}</span>
+                      {editingId === n.id ? (
+                        <Input
+                          autoFocus
+                          value={draftName}
+                          onChange={(e) => setDraftName(e.target.value)}
+                          onBlur={commitRename}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitRename();
+                            if (e.key === 'Escape') cancelRename();
+                          }}
+                          className="h-7 text-xs font-mono px-2 w-40"
+                        />
+                      ) : (
+                        <span className="font-mono text-xs truncate">{n.name}</span>
+                      )}
                       <div className="ml-auto">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -73,15 +110,7 @@ export default function HierarchyTree() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" sideOffset={4} onCloseAutoFocus={(e) => e.preventDefault()}>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                const newName = window.prompt("Rename body", n.name)?.trim();
-                                if (newName) {
-                                  select(n.id);
-                                  renameSelected(newName);
-                                }
-                              }}
-                            >
+                            <DropdownMenuItem onClick={() => startRename(n.id, n.name)}>
                               Rename
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -100,15 +129,7 @@ export default function HierarchyTree() {
                   </Button>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
-                  <ContextMenuItem
-                    onClick={() => {
-                      const newName = window.prompt("Rename body", n.name)?.trim();
-                      if (newName) {
-                        select(n.id);
-                        renameSelected(newName);
-                      }
-                    }}
-                  >
+                  <ContextMenuItem onClick={() => startRename(n.id, n.name)}>
                     Rename
                   </ContextMenuItem>
                   <ContextMenuItem
