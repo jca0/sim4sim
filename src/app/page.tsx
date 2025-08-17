@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { ImperativePanelHandle } from "react-resizable-panels";
 
 
 
@@ -16,8 +17,8 @@ export default function EditorPage() {
   const deleteSelected = useMjcfEditorStore((s) => s.deleteSelected);
   const undo = useMjcfEditorStore((s) => s.undo);
   const redo = useMjcfEditorStore((s) => s.redo);
-  const leftRef = useRef<any>(null);
-  const rightRef = useRef<any>(null);
+  const leftRef = useRef<ImperativePanelHandle | null>(null);
+  const rightRef = useRef<ImperativePanelHandle | null>(null);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
 

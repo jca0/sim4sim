@@ -51,7 +51,7 @@ export default function XmlPreview() {
       setXml(draft);
       setIsEditMode(false);
       setError(null);
-    } catch (e) {
+    } catch {
       setError("XML is not valid. Fix the errors and try again.");
     }
   };

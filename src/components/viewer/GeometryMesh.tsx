@@ -4,6 +4,7 @@ import { useRef, useEffect } from 'react';
 import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import type { BodyNode } from '@/types/mjcf';
 import * as THREE from 'three';
+import type { ThreeEvent } from '@react-three/fiber';
 
 interface GeometryMeshProps {
   node: BodyNode;
@@ -16,12 +17,6 @@ export function GeometryMesh({ node, registerMesh }: GeometryMeshProps) {
     selection: state.selection,
     select: state.select
   }));
-
-  // Early return if node data is invalid
-  if (!node || !node.geom || !node.pos || !node.quat || !node.geom.size) {
-    console.warn('Invalid node data, skipping render:', node);
-    return null;
-  }
 
   const isSelected = selection === node.id;
 
@@ -40,8 +35,14 @@ export function GeometryMesh({ node, registerMesh }: GeometryMeshProps) {
       registerMesh(node.id, null);
     };
   }, [node.id, registerMesh]);
+
+  // Validate node before deriving geometry/props (hooks must run before early returns)
+  if (!node || !node.geom || !node.pos || !node.quat || !node.geom.size) {
+    console.warn('Invalid node data, skipping render:', node);
+    return null;
+  }
   
-  const handleClick = (e: any) => {
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     select(node.id);
   };

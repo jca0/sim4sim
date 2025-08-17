@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import * as THREE from 'three';
 import type { TransformMode } from './useTransformMode';
+import type React from 'react';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 export function useTransformControls() {
   const { selection, nodes, updateTransform, updateScale } = useMjcfEditorStore((state) => ({
@@ -16,7 +18,7 @@ export function useTransformControls() {
   const handleMouseDown = useCallback((
     transformMode: TransformMode, 
     targetMesh: THREE.Mesh | null, 
-    orbitRef: React.RefObject<any>
+    orbitRef: React.RefObject<OrbitControlsImpl | null>
   ) => {
     if (orbitRef.current) orbitRef.current.enabled = false;
     
@@ -94,7 +96,8 @@ export function useTransformControls() {
     }
   }, [selection, nodes, updateTransform, updateScale, initialScale]);
 
-  const handleMouseUp = useCallback((orbitRef: React.RefObject<any>) => {
+  const handleMouseUp = useCallback((orbitRef: React.RefObject<OrbitControlsImpl | null>) => {
+    // Re-enable orbit controls and clear state
     if (orbitRef.current) orbitRef.current.enabled = true;
     setInitialScale(null);
   }, []);

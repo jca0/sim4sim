@@ -5,10 +5,12 @@ import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import { useTransformControls } from '@/hooks/useTransformControls';
 import type { TransformMode } from '@/hooks/useTransformMode';
 import * as THREE from 'three';
+import type React from 'react';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 interface TransformControlsComponentProps {
   targetMesh: THREE.Mesh | null;
-  orbitRef: React.RefObject<any>;
+  orbitRef: React.RefObject<OrbitControlsImpl | null>;
   transformMode: TransformMode;
 }
 

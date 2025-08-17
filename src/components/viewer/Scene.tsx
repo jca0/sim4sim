@@ -8,6 +8,8 @@ import { useMeshRegistry } from '@/hooks/useMeshRegistry';
 import { GeometryMesh } from './GeometryMesh';
 import { TransformControlsComponent } from './TransformControlsComponent';
 import type { TransformMode } from '@/hooks/useTransformMode';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+
 
 interface SceneProps {
   transformMode: TransformMode;
@@ -15,7 +17,7 @@ interface SceneProps {
 
 export function Scene({ transformMode }: SceneProps) {
   const nodes = useMjcfEditorStore((state) => state.nodes);
-  const orbitRef = useRef<any>(null);
+  const orbitRef = useRef<OrbitControlsImpl | null>(null);
   
   const {
     selectedMesh,
