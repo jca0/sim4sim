@@ -88,7 +88,6 @@ function NumberInput({
   const [text, setText] = useState<string>(format(value));
   useEffect(() => {
     setText(format(value));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const commit = () => {
@@ -148,7 +147,7 @@ export default function Inspector() {
   const nodes = useMjcfEditorStore((s) => s.nodes);
   const selection = useMjcfEditorStore((s) => s.selection);
   const updateTransform = useMjcfEditorStore((s) => s.updateTransform);
-  const rebuildXml = useMjcfEditorStore((s) => s.rebuildXml);
+  // const rebuildXml = useMjcfEditorStore((s) => s.rebuildXml);
   const updateGeomSize = useMjcfEditorStore((s) => s.updateGeomSize);
 
   const node = useMemo(

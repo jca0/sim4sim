@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { OrbitControls, Grid } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import { useMeshRegistry } from '@/hooks/useMeshRegistry';
 import { GeometryMesh } from './GeometryMesh';
@@ -10,9 +10,13 @@ import { TransformControlsComponent } from './TransformControlsComponent';
 import type { TransformMode } from '@/hooks/useTransformMode';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
-
 interface SceneProps {
   transformMode: TransformMode;
+}
+
+// Minimal interface to set colorSpace in a type-safe way across Three versions
+interface ColorSpaceAssignable {
+  colorSpace?: unknown;
 }
 
 export function Scene({ transformMode }: SceneProps) {
@@ -46,8 +50,7 @@ export function Scene({ transformMode }: SceneProps) {
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(20, 20);
-    // @ts-ignore - three types
-    texture.colorSpace = THREE.SRGBColorSpace;
+    (texture as unknown as ColorSpaceAssignable).colorSpace = (THREE as unknown as { SRGBColorSpace: unknown }).SRGBColorSpace;
     texture.anisotropy = 8;
     texture.needsUpdate = true;
     return texture;
@@ -89,7 +92,7 @@ export function Scene({ transformMode }: SceneProps) {
         <planeGeometry args={[100, 100]} />
         <meshStandardMaterial 
           color="#ffffff" 
-          map={checkerTexture as any}
+          map={checkerTexture ?? undefined}
           transparent 
           opacity={0.6} 
           side={THREE.DoubleSide}

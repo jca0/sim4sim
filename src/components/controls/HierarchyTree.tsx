@@ -20,7 +20,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Input } from "@/components/ui/input";
-import { useMjcfEditorStore as useStore } from "@/contexts/MjcfEditorStore";
+// removed unused alias import
 
 export default function HierarchyTree() {
   const nodes = useMjcfEditorStore((s) => s.nodes);

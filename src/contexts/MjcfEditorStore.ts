@@ -225,7 +225,7 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
       const nodes = parseMjcfXml(xmlString);
       const xml = buildMjcfXml(nodes);
       set({ nodes, xml, selection: null });
-    } catch (e) {
+    } catch {
       // ignore parse errors to avoid locking UI while typing
     }
   },
