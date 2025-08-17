@@ -179,6 +179,7 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     // @ts-expect-error internal stacks in closure
     const redoStack = get().__redoStack as Array<{ nodes: BodyNode[]; selection: string | null; xml: string }>;
     if (!undoStack.length) return;
+    // @ts-expect-error internal helper in closure
     const current = get().__takeSnapshot();
     const prev = undoStack.pop();
     if (!prev) return;
@@ -193,6 +194,7 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     // @ts-expect-error internal stacks in closure
     const redoStack = get().__redoStack as Array<{ nodes: BodyNode[]; selection: string | null; xml: string }>;
     if (!redoStack.length) return;
+    // @ts-expect-error internal helper in closure
     const current = get().__takeSnapshot();
     const next = redoStack.pop();
     if (!next) return;

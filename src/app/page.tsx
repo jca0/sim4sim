@@ -79,13 +79,13 @@ export default function EditorPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deleteSelected, undo, redo]);
   return (
-    <div className="grid grid-rows-[auto_1fr] h-screen bg-background">
+    <div className="grid grid-rows-[auto_1fr] h-screen bg-background overflow-hidden">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2 flex items-center gap-3">
         <div className="font-semibold">MJCF Editor</div>
         <div className="opacity-60 text-sm">Primitives • Hierarchy • Live XML</div>
       </header>
-      <div className="relative min-h-0">
-        <ResizablePanelGroup direction="horizontal" className="min-h-0">
+      <div className="relative min-h-0 h-full overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="min-h-0 h-full">
           <ResizablePanel ref={leftRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-2 border-b">
             <div className="text-xs font-medium opacity-70">Left Pane</div>
@@ -118,8 +118,8 @@ export default function EditorPage() {
               )}
             </Button>
           </div>
-          <div className="p-3 space-y-4 overflow-auto flex-1">
-            <div className="flex-shrink-0">
+          <div className="p-3 flex flex-col gap-4 overflow-hidden flex-1">
+            <div className="h-64 flex-shrink-0">
               <XmlPreview />
             </div>
             <div className="flex-1 min-h-0">
