@@ -6,6 +6,9 @@ import Inspector from "@/components/controls/Inspector";
 import MujocoViewer from "@/components/MujocoViewer";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
 import { useEffect } from "react";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal } from "lucide-react";
 
 
 
@@ -53,26 +56,46 @@ export default function EditorPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deleteSelected, undo, redo]);
   return (
-    <div className="grid grid-cols-[260px_1fr_420px] grid-rows-[auto_1fr] h-screen bg-background">
-      <header className="col-span-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2 flex items-center gap-3">
+    <div className="grid grid-rows-[auto_1fr] h-screen bg-background">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2 flex items-center gap-3">
         <div className="font-semibold">MJCF Editor</div>
         <div className="opacity-60 text-sm">Primitives • Hierarchy • Live XML</div>
       </header>
-      <aside className="bg-muted/30 overflow-auto p-3 space-y-4">
-        <PrimitivePalette />
-        <HierarchyTree />
-      </aside>
-      <main className="overflow-hidden">
-        <MujocoViewer />
-      </main>
-      <section className="bg-muted/30 overflow-auto flex flex-col p-3 space-y-4">
-        <div className="flex-shrink-0">
-          <XmlPreview />
-        </div>
-        <div className="flex-1 min-h-0">
-          <Inspector />
-        </div>
-      </section>
+      <ResizablePanelGroup direction="horizontal" className="min-h-0">
+        <ResizablePanel defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between p-2 border-b">
+            <div className="text-xs font-medium opacity-70">Left Pane</div>
+            <Button size="icon" variant="ghost" className="h-7 w-7">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="p-3 space-y-4 overflow-auto flex-1">
+            <PrimitivePalette />
+            <HierarchyTree />
+          </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={56} minSize={35} className="overflow-hidden">
+          <MujocoViewer />
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between p-2 border-b">
+            <div className="text-xs font-medium opacity-70">Right Pane</div>
+            <Button size="icon" variant="ghost" className="h-7 w-7">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="p-3 space-y-4 overflow-auto flex-1">
+            <div className="flex-shrink-0">
+              <XmlPreview />
+            </div>
+            <div className="flex-1 min-h-0">
+              <Inspector />
+            </div>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }
