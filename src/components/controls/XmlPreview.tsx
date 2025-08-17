@@ -6,13 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download, Code, Edit, Eye } from "lucide-react";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import dynamic from "next/dynamic";
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-markup";
 import "prismjs/themes/prism-tomorrow.css";
 import { parseMjcfXml } from "@/lib/mjcf/xmlParse";
+
+const SyntaxHighlighter = dynamic(
+  () => import('react-syntax-highlighter').then((m) => m.Prism),
+  { ssr: false }
+);
 
 export default function XmlPreview() {
   const xml = useMjcfEditorStore((s) => s.xml);
