@@ -5,10 +5,10 @@ import XmlPreview from "@/components/controls/XmlPreview";
 import Inspector from "@/components/controls/Inspector";
 import MujocoViewer from "@/components/MujocoViewer";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 
 
@@ -16,6 +16,29 @@ export default function EditorPage() {
   const deleteSelected = useMjcfEditorStore((s) => s.deleteSelected);
   const undo = useMjcfEditorStore((s) => s.undo);
   const redo = useMjcfEditorStore((s) => s.redo);
+  const leftRef = useRef<any>(null);
+  const rightRef = useRef<any>(null);
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
+  const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+
+  const toggleLeft = () => {
+    if (isLeftCollapsed) {
+      leftRef.current?.expand?.();
+      setIsLeftCollapsed(false);
+    } else {
+      leftRef.current?.collapse?.();
+      setIsLeftCollapsed(true);
+    }
+  };
+  const toggleRight = () => {
+    if (isRightCollapsed) {
+      rightRef.current?.expand?.();
+      setIsRightCollapsed(false);
+    } else {
+      rightRef.current?.collapse?.();
+      setIsRightCollapsed(true);
+    }
+  };
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -61,29 +84,38 @@ export default function EditorPage() {
         <div className="font-semibold">MJCF Editor</div>
         <div className="opacity-60 text-sm">Primitives • Hierarchy • Live XML</div>
       </header>
-      <ResizablePanelGroup direction="horizontal" className="min-h-0">
-        <ResizablePanel defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
+      <div className="relative min-h-0">
+        <ResizablePanelGroup direction="horizontal" className="min-h-0">
+          <ResizablePanel ref={leftRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-2 border-b">
             <div className="text-xs font-medium opacity-70">Left Pane</div>
-            <Button size="icon" variant="ghost" className="h-7 w-7">
-              <MoreHorizontal className="h-4 w-4" />
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={toggleLeft} title={isLeftCollapsed ? "Expand left" : "Collapse left"}>
+              {isLeftCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
             </Button>
           </div>
           <div className="p-3 space-y-4 overflow-auto flex-1">
             <PrimitivePalette />
             <HierarchyTree />
           </div>
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={56} minSize={35} className="overflow-hidden">
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={56} minSize={35} className="overflow-hidden">
           <MujocoViewer />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel ref={rightRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-2 border-b">
             <div className="text-xs font-medium opacity-70">Right Pane</div>
-            <Button size="icon" variant="ghost" className="h-7 w-7">
-              <MoreHorizontal className="h-4 w-4" />
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={toggleRight} title={isRightCollapsed ? "Expand right" : "Collapse right"}>
+              {isRightCollapsed ? (
+                <ChevronLeft className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
             </Button>
           </div>
           <div className="p-3 space-y-4 overflow-auto flex-1">
@@ -94,8 +126,32 @@ export default function EditorPage() {
               <Inspector />
             </div>
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+
+        {isLeftCollapsed && (
+          <Button
+            size="icon"
+            variant="outline"
+            className="absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full shadow"
+            onClick={toggleLeft}
+            title="Expand left"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
+        {isRightCollapsed && (
+          <Button
+            size="icon"
+            variant="outline"
+            className="absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full shadow"
+            onClick={toggleRight}
+            title="Expand right"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
