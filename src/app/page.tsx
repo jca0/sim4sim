@@ -88,8 +88,8 @@ export default function EditorPage() {
         <ResizablePanelGroup direction="horizontal" className="min-h-0 h-full">
           <ResizablePanel ref={leftRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-2 border-b">
-            <div className="text-xs font-medium opacity-70">Left Pane</div>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={toggleLeft} title={isLeftCollapsed ? "Expand left" : "Collapse left"}>
+            <div className="text-xs font-medium opacity-70"></div>
+            <Button size="icon" variant="ghost" className="h-7 w-7 cursor-pointer" onClick={toggleLeft} title={isLeftCollapsed ? "Expand left" : "Collapse left"}>
               {isLeftCollapsed ? (
                 <ChevronRight className="h-4 w-4" />
               ) : (
@@ -109,8 +109,8 @@ export default function EditorPage() {
           <ResizableHandle withHandle />
           <ResizablePanel ref={rightRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-2 border-b">
-            <div className="text-xs font-medium opacity-70">Right Pane</div>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={toggleRight} title={isRightCollapsed ? "Expand right" : "Collapse right"}>
+            <div className="text-xs font-medium opacity-70"></div>
+            <Button size="icon" variant="ghost" className="h-7 w-7 cursor-pointer" onClick={toggleRight} title={isRightCollapsed ? "Expand right" : "Collapse right"}>
               {isRightCollapsed ? (
                 <ChevronLeft className="h-4 w-4" />
               ) : (
@@ -133,7 +133,7 @@ export default function EditorPage() {
           <Button
             size="icon"
             variant="outline"
-            className="absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full shadow"
+            className="absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full shadow cursor-pointer"
             onClick={toggleLeft}
             title="Expand left"
           >
@@ -144,7 +144,7 @@ export default function EditorPage() {
           <Button
             size="icon"
             variant="outline"
-            className="absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full shadow"
+            className="absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full shadow cursor-pointer"
             onClick={toggleRight}
             title="Expand right"
           >
