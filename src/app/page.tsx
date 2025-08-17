@@ -21,6 +21,8 @@ export default function EditorPage() {
   const rightRef = useRef<ImperativePanelHandle | null>(null);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+  const [leftSize, setLeftSize] = useState<number>(22);
+  const [rightSize, setRightSize] = useState<number>(22);
 
   const toggleLeft = () => {
     if (isLeftCollapsed) {
@@ -87,7 +89,16 @@ export default function EditorPage() {
       </header>
       <div className="relative min-h-0 h-full overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="min-h-0 h-full">
-          <ResizablePanel ref={leftRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col relative group">
+          <ResizablePanel
+            ref={leftRef}
+            collapsible
+            collapsedSize={0}
+            defaultSize={22}
+            minSize={15}
+            onResize={(size: number) => setLeftSize(size)}
+            onCollapse={(...args: unknown[]) => setIsLeftCollapsed(true)}
+            className="bg-muted/30 overflow-hidden flex flex-col relative group"
+          >
           <button
             className="absolute top-0 right-[-4px] z-20 h-6 w-6 cursor-pointer opacity-70 hover:opacity-100 bg-transparent border-0 shadow-none inline-flex items-center justify-center"
             onClick={toggleLeft}
@@ -105,9 +116,18 @@ export default function EditorPage() {
           <MujocoViewer />
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel ref={rightRef} collapsible collapsedSize={0} defaultSize={22} minSize={15} className="bg-muted/30 overflow-hidden flex flex-col relative group">
+          <ResizablePanel
+            ref={rightRef}
+            collapsible
+            collapsedSize={0}
+            defaultSize={22}
+            minSize={15}
+            onResize={(size: number) => setRightSize(size)}
+            onCollapse={(...args: unknown[]) => setIsRightCollapsed(true)}
+            className="bg-muted/30 overflow-hidden flex flex-col relative group"
+          >
           <button
-            className="absolute top-0 left-[-4px] z-20 h-6 w-6 cursor-pointer opacity-70 hover:opacity-100 bg-transparent border-0 shadow-none inline-flex items-center justify-center"
+            className="absolute top-0 left-[-2px] z-20 h-6 w-6 cursor-pointer opacity-70 hover:opacity-100 bg-transparent border-0 shadow-none inline-flex items-center justify-center"
             onClick={toggleRight}
             title={isRightCollapsed ? "Expand right" : "Collapse right"}
           >
@@ -129,22 +149,22 @@ export default function EditorPage() {
           </ResizablePanel>
         </ResizablePanelGroup>
 
-        {isLeftCollapsed && (
+        {(isLeftCollapsed || leftSize <= 1) && (
           <Button
             size="icon"
             variant="outline"
-            className="absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full shadow cursor-pointer"
+            className="absolute top-1/2 -translate-y-1/2 left-2 z-30 h-8 w-8 rounded-full shadow cursor-pointer"
             onClick={toggleLeft}
             title="Expand left"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         )}
-        {isRightCollapsed && (
+        {(isRightCollapsed || rightSize <= 1) && (
           <Button
             size="icon"
             variant="outline"
-            className="absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full shadow cursor-pointer"
+            className="absolute top-1/2 -translate-y-1/2 right-2 z-30 h-8 w-8 rounded-full shadow cursor-pointer"
             onClick={toggleRight}
             title="Expand right"
           >

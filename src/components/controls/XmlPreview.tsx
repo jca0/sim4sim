@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download, Code, Edit, Eye } from "lucide-react";
+import { Download, Code, Edit, Eye, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { parseMjcfXml } from "@/lib/mjcf/xmlParse";
@@ -26,6 +26,8 @@ export default function XmlPreview() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [draft, setDraft] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [compact, setCompact] = useState(false);
 
   useEffect(() => {
     if (isEditMode) {
@@ -33,6 +35,20 @@ export default function XmlPreview() {
       setError(null);
     }
   }, [isEditMode, xml]);
+
+  // Make header actions responsive to available width in the right pane
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        setCompact(w < 360); // threshold where labels start to overflow
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const download = () => {
     const blob = new Blob([xml], { type: "application/xml" });
@@ -64,12 +80,12 @@ export default function XmlPreview() {
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 flex-shrink-0">
+      <CardHeader ref={headerRef} className="flex flex-row items-center justify-between space-y-0 pb-3 flex-shrink-0">
         <CardTitle className="text-sm flex items-center">
           <Code className="mr-2 h-4 w-4" />
           {isEditMode ? "XML Editor" : "XML Output"}
         </CardTitle>
-        <div className="flex gap-2">
+        <div className={`flex ${compact ? 'gap-1' : 'gap-2'}`}>
           {isEditMode ? (
             <>
               <Button
@@ -78,8 +94,8 @@ export default function XmlPreview() {
                 variant="default"
                 className="h-8 cursor-pointer hover:scale-105 transition-transform"
               >
-                <Eye className="mr-2 h-3 w-3" />
-                Apply
+                <Eye className={`h-3 w-3 ${compact ? 'mr-0' : 'mr-2'}`} />
+                {!compact && <span>Apply</span>}
               </Button>
               <Button
                 onClick={onCancel}
@@ -87,7 +103,8 @@ export default function XmlPreview() {
                 variant="outline"
                 className="h-8 cursor-pointer"
               >
-                Cancel
+                <X className={`h-3 w-3 ${compact ? 'mr-0' : 'mr-2'}`} />
+                {!compact && <span>Cancel</span>}
               </Button>
             </>
           ) : (
@@ -97,8 +114,8 @@ export default function XmlPreview() {
               variant="outline"
               className="h-8 cursor-pointer hover:scale-105 transition-transform"
             >
-              <Edit className="mr-2 h-3 w-3" />
-              Edit
+              <Edit className={`h-3 w-3 ${compact ? 'mr-0' : 'mr-2'}`} />
+              {!compact && <span>Edit</span>}
             </Button>
           )}
           <Button
@@ -107,8 +124,8 @@ export default function XmlPreview() {
             variant="outline"
             className="h-8 cursor-pointer hover:scale-105 transition-transform"
           >
-            <Download className="mr-2 h-3 w-3" />
-            Download
+            <Download className={`h-3 w-3 ${compact ? 'mr-0' : 'mr-2'}`} />
+            {!compact && <span>Download</span>}
           </Button>
         </div>
       </CardHeader>
