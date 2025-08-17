@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from 'react';
-import { DoubleSide } from 'three';
+import { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import { useMeshRegistry } from '@/hooks/useMeshRegistry';
@@ -22,6 +22,34 @@ export function Scene({ transformMode }: SceneProps) {
     registerMesh,
     handleCanvasClick
   } = useMeshRegistry();
+
+  const checkerTexture = useMemo(() => {
+    const size = 256;
+    const tiles = 8; // number of squares per side
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const tileSize = size / tiles;
+    const color1 = '#f3f4f6'; // light gray
+    const color2 = '#e5e7eb'; // slightly darker gray
+    for (let y = 0; y < tiles; y++) {
+      for (let x = 0; x < tiles; x++) {
+        ctx.fillStyle = (x + y) % 2 === 0 ? color1 : color2;
+        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+      }
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(20, 20);
+    // @ts-ignore - three types
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
 
   return (
     <>
@@ -72,7 +100,15 @@ export function Scene({ transformMode }: SceneProps) {
         receiveShadow
       >
         <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial color="#f3f4f6" transparent opacity={0.6} side={DoubleSide} />
+        <meshStandardMaterial 
+          color="#ffffff" 
+          map={checkerTexture as any}
+          transparent 
+          opacity={0.6} 
+          side={THREE.DoubleSide}
+          roughness={1}
+          metalness={0}
+        />
       </mesh>
 
       {/* Transform controls for selected object */}
