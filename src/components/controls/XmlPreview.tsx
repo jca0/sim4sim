@@ -8,14 +8,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download, Code, Edit, Eye } from "lucide-react";
 import dynamic from "next/dynamic";
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Editor from "react-simple-code-editor";
-import Prism from "prismjs";
-import "prismjs/components/prism-markup";
-import "prismjs/themes/prism-tomorrow.css";
 import { parseMjcfXml } from "@/lib/mjcf/xmlParse";
 
 const SyntaxHighlighter = dynamic(
   () => import('react-syntax-highlighter').then((m) => m.Prism),
+  { ssr: false }
+);
+
+const MonacoEditor = dynamic(
+  () => import("@monaco-editor/react"),
   { ssr: false }
 );
 
@@ -114,21 +115,23 @@ export default function XmlPreview() {
       <CardContent className="flex-1 p-0 min-h-0 overflow-hidden">
         {isEditMode ? (
           <div className="h-full flex flex-col">
-            <div className="flex-1 overflow-auto">
-              <Editor
+            <div className="flex-1 overflow-hidden">
+              <MonacoEditor
+                height="100%"
+                defaultLanguage="xml"
                 value={draft}
-                onValueChange={(code) => {
-                  setDraft(code);
+                onChange={(val) => {
+                  setDraft(val ?? "");
                   if (error) setError(null);
                 }}
-                highlight={(code) => Prism.highlight(code, Prism.languages.markup, "markup")}
-                padding={16}
-                textareaId="xml-editor"
-                textareaClassName="outline-none"
-                className="text-xs font-mono w-full bg-muted/50 rounded-sm focus:bg-muted/80 transition-colors"
-                style={{
-                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-                  fontSize: 12
+                options={{
+                  wordWrap: "on",
+                  minimap: { enabled: false },
+                  folding: true,
+                  formatOnPaste: true,
+                  formatOnType: true,
+                  automaticLayout: true,
+                  scrollBeyondLastLine: false,
                 }}
               />
             </div>
