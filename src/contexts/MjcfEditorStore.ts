@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import type { BodyNode, GeomType } from "@/types/mjcf";
 import { buildMjcfXml } from "@/lib/mjcf/xmlGen";
+import { parseMjcfXml } from "@/lib/mjcf/xmlParse";
 
 type EditorState = {
   nodes: BodyNode[];
@@ -21,6 +22,8 @@ type EditorState = {
   deleteSelected: () => void;
   undo: () => void;
   redo: () => void;
+  renameSelected: (newName: string) => void;
+  setXml: (xml: string) => void;
 };
 
 let counter = 0;
@@ -86,6 +89,17 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     const nodes = [...get().nodes, node];
     const xml = buildMjcfXml(nodes);
     set({ nodes, selection: id, xml });
+  },
+  renameSelected: (newName: string) => {
+    const sel = get().selection;
+    if (!sel) return;
+    // @ts-expect-error internal helper in closure
+    get().__pushUndo();
+    const nodes = get().nodes.map((n) =>
+      n.id === sel ? { ...n, name: newName } : n
+    );
+    const xml = buildMjcfXml(nodes);
+    set({ nodes, xml });
   },
   updateTransform: (id, pos, quat) => {
     // @ts-expect-error internal helper in closure
@@ -186,6 +200,18 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     if (undoStack.length > 100) undoStack.shift();
     // @ts-expect-error internal helper in closure
     get().__applySnapshot(next);
+  },
+  setXml: (xmlString: string) => {
+    // Try parse; if fails, do not change state
+    try {
+      // @ts-expect-error internal helper in closure
+      get().__pushUndo();
+      const nodes = parseMjcfXml(xmlString);
+      const xml = buildMjcfXml(nodes);
+      set({ nodes, xml, selection: null });
+    } catch (e) {
+      // ignore parse errors to avoid locking UI while typing
+    }
   },
 }));
 

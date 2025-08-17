@@ -8,6 +8,7 @@ import { Download, Code } from "lucide-react";
 
 export default function XmlPreview() {
   const xml = useMjcfEditorStore((s) => s.xml);
+  const setXml = useMjcfEditorStore((s) => s.setXml);
 
   const download = () => {
     const blob = new Blob([xml], { type: "application/xml" });
@@ -38,9 +39,11 @@ export default function XmlPreview() {
       </CardHeader>
       <CardContent className="flex-1 p-0 min-h-0">
         <ScrollArea className="h-full">
-          <pre className="p-4 text-xs font-mono whitespace-pre-wrap break-words bg-muted/50">
-{xml}
-          </pre>
+          <textarea
+            className="p-4 text-xs font-mono whitespace-pre bg-muted/50 w-full h-44 outline-none border-0 resize-none"
+            value={xml}
+            onChange={(e) => setXml(e.target.value)}
+          />
         </ScrollArea>
       </CardContent>
     </Card>

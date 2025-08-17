@@ -9,7 +9,6 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Settings, Move, RotateCw, Ruler, Shapes, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 function SliderWithInput({
   value,
@@ -117,7 +116,6 @@ export default function Inspector() {
   const selection = useMjcfEditorStore((s) => s.selection);
   const updateTransform = useMjcfEditorStore((s) => s.updateTransform);
   const rebuildXml = useMjcfEditorStore((s) => s.rebuildXml);
-  const deleteSelected = useMjcfEditorStore((s) => s.deleteSelected);
 
   const node = useMemo(
     () => nodes.find((n) => n.id === selection) || null,
@@ -176,19 +174,14 @@ export default function Inspector() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto space-y-4">
-        {/* Body Info + Delete */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground">Body Name</Label>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="font-mono text-xs">
-                {node.name}
-              </Badge>
-            </div>
+        {/* Body Info */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Body Name</Label>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="font-mono text-xs">
+              {node.name}
+            </Badge>
           </div>
-          <Button variant="destructive" size="sm" onClick={deleteSelected} title="Delete (Del/Backspace)">
-            <Trash2 className="mr-1 h-4 w-4" /> Delete
-          </Button>
         </div>
 
         <Separator />
