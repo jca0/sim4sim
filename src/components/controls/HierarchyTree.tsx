@@ -45,7 +45,7 @@ export default function HierarchyTree() {
                   <Button
                     asChild
                     variant={selection === n.id ? "secondary" : "ghost"}
-                    className="w-full justify-start h-auto p-2 cursor-pointer hover:scale-[1.02] transition-transform"
+                    className="w-full justify-start h-auto p-2 cursor-pointer"
                   >
                     <div
                       className="w-full flex items-center gap-2"
@@ -61,7 +61,7 @@ export default function HierarchyTree() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
-                              className="opacity-70 hover:opacity-100 p-1 rounded-full hover:bg-accent transition-colors"
+                              className="opacity-70 p-1 rounded-full transition-colors cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 select(n.id);

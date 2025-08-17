@@ -30,7 +30,8 @@ export function TransformControlsComponent({
   
   const selectedNode = nodes.find(node => node.id === selection);
 
-  if (!selectedNode || !targetMesh) return null;
+  // Only render controls when the mesh exists and is attached to the scene graph
+  if (!selectedNode || !targetMesh || !targetMesh.parent) return null;
 
   return (
     <TransformControls
