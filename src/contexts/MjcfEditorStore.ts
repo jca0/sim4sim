@@ -16,6 +16,7 @@ type EditorState = {
     quat: [number, number, number, number]
   ) => void;
   updateScale: (id: string, scale: [number, number, number]) => void;
+  updateGeomSize: (id: string, index: number, value: number) => void;
   select: (id: string | null) => void;
   rebuildXml: () => void;
   reset: () => void;
@@ -152,6 +153,19 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
       // Ensure all new size values are finite
       newSize = newSize.map(s => Number.isFinite(s) ? s : 0.1);
       
+      return { ...n, geom: { ...n.geom, size: newSize } };
+    });
+    const xml = buildMjcfXml(nodes);
+    set({ nodes, xml });
+  },
+  updateGeomSize: (id, index, value) => {
+    // @ts-expect-error internal helper in closure
+    get().__pushUndo();
+    const nodes = get().nodes.map((n) => {
+      if (n.id !== id) return n;
+      const safeValue = Number.isFinite(value) ? Math.max(0.001, value) : 0.001;
+      const newSize = [...n.geom.size];
+      newSize[index] = safeValue;
       return { ...n, geom: { ...n.geom, size: newSize } };
     });
     const xml = buildMjcfXml(nodes);

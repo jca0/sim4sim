@@ -116,6 +116,7 @@ export default function Inspector() {
   const selection = useMjcfEditorStore((s) => s.selection);
   const updateTransform = useMjcfEditorStore((s) => s.updateTransform);
   const rebuildXml = useMjcfEditorStore((s) => s.rebuildXml);
+  const updateGeomSize = useMjcfEditorStore((s) => s.updateGeomSize);
 
   const node = useMemo(
     () => nodes.find((n) => n.id === selection) || null,
@@ -154,8 +155,7 @@ export default function Inspector() {
   };
   
   const setSize = (i: number, v: number) => {
-    node.geom.size[i] = v;
-    rebuildXml();
+    updateGeomSize(node.id, i, v);
   };
 
   const sizeLabels =
