@@ -1,57 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Settings, Move, RotateCw, Ruler, Shapes, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Settings, Move, RotateCw, Shapes } from "lucide-react";
 
-function SliderWithInput({
-  value,
-  onChange,
-  min = -10,
-  max = 10,
-  step = 0.01,
-  label,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-  label?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      {label && (
-        <Label className="text-xs font-medium text-muted-foreground">
-          {label}
-        </Label>
-      )}
-      <div className="flex items-center space-x-3">
-        <Slider
-          value={[Number.isFinite(value) ? value : 0]}
-          onValueChange={([newValue]) => onChange(newValue)}
-          min={min}
-          max={max}
-          step={step}
-          className="flex-1"
-        />
-        <Input
-          type="number"
-          value={Number.isFinite(value) ? value.toFixed(2) : "0.00"}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          step={step}
-          className="w-20 text-xs text-center cursor-text hover:border-primary/50 transition-colors"
-        />
-      </div>
-    </div>
-  );
-}
+// Removed sliders; using numeric inputs only per request
 
 // Convert quaternion [w, x, y, z] to Euler angles [x, y, z] in radians  
 function quatToEuler(quat: [number, number, number, number]): [number, number, number] {
@@ -109,6 +67,81 @@ function eulerToQuat(euler: [number, number, number]): [number, number, number, 
     Number.isFinite(y) ? y : 0,
     Number.isFinite(z) ? z : 0
   ];
+}
+
+function NumberInput({
+  value,
+  onCommit,
+  step = 0.01,
+  min,
+  max,
+  className,
+}: {
+  value: number;
+  onCommit: (v: number) => void;
+  step?: number;
+  min?: number;
+  max?: number;
+  className?: string;
+}) {
+  const format = (n: number) => (Number.isFinite(n) ? String(n) : "0");
+  const [text, setText] = useState<string>(format(value));
+  useEffect(() => {
+    setText(format(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const commit = () => {
+    const parsed = parseFloat(text);
+    if (Number.isFinite(parsed)) {
+      let v = parsed;
+      if (typeof min === 'number') v = Math.max(min, v);
+      if (typeof max === 'number') v = Math.min(max, v);
+      onCommit(v);
+      setText(format(v));
+    } else {
+      setText(format(value));
+    }
+  };
+
+  return (
+    <Input
+      type="text"
+      inputMode="decimal"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          (e.target as HTMLInputElement).blur();
+        } else if (e.key === 'Escape') {
+          setText(format(value));
+          (e.target as HTMLInputElement).blur();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const parsed = parseFloat(text);
+          const base = Number.isFinite(parsed) ? parsed : value;
+          const next = base + step;
+          let v = next;
+          if (typeof min === 'number') v = Math.max(min, v);
+          if (typeof max === 'number') v = Math.min(max, v);
+          setText(format(v));
+          onCommit(v);
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const parsed = parseFloat(text);
+          const base = Number.isFinite(parsed) ? parsed : value;
+          const next = base - step;
+          let v = next;
+          if (typeof min === 'number') v = Math.max(min, v);
+          if (typeof max === 'number') v = Math.min(max, v);
+          setText(format(v));
+          onCommit(v);
+        }
+      }}
+      className={className}
+    />
+  );
 }
 
 export default function Inspector() {
@@ -192,31 +225,17 @@ export default function Inspector() {
             <Move className="mr-2 h-4 w-4" />
             Position
           </Label>
-          <div className="space-y-3">
-            <SliderWithInput 
-              value={node.pos[0]} 
-              onChange={(v) => setPos(0, v)} 
-              min={-10} 
-              max={10} 
-              step={0.01}
-              label="X"
-            />
-            <SliderWithInput 
-              value={node.pos[1]} 
-              onChange={(v) => setPos(1, v)} 
-              min={-10} 
-              max={10} 
-              step={0.01}
-              label="Y"
-            />
-            <SliderWithInput 
-              value={node.pos[2]} 
-              onChange={(v) => setPos(2, v)} 
-              min={-10} 
-              max={10} 
-              step={0.01}
-              label="Z"
-            />
+          <div className="grid grid-cols-3 gap-2">
+            {["X", "Y", "Z"].map((axis, i) => (
+              <div key={axis} className="space-y-1">
+                <Label className="text-xs text-muted-foreground">{axis}</Label>
+                <NumberInput
+                  value={Number.isFinite(node.pos[i]) ? node.pos[i] : 0}
+                  onCommit={(v) => setPos(i, v)}
+                  step={0.01}
+                />
+              </div>
+            ))}
           </div>
         </div>
 
@@ -228,17 +247,16 @@ export default function Inspector() {
             <RotateCw className="mr-2 h-4 w-4" />
             Rotation (degrees)
           </Label>
-          <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
             {quatToEuler(node.quat).map((angle, i) => (
-              <SliderWithInput
-                key={i}
-                value={angle * (180 / Math.PI)} // Convert radians to degrees
-                onChange={(v) => setEuler(i, v * (Math.PI / 180))} // Convert degrees to radians
-                min={-180}
-                max={180}
-                step={1}
-                label={['Roll', 'Pitch', 'Yaw'][i]}
-              />
+              <div key={i} className="space-y-1">
+                <Label className="text-xs text-muted-foreground">{['Roll','Pitch','Yaw'][i]}</Label>
+                <NumberInput
+                  value={Number.isFinite(angle) ? angle * (180 / Math.PI) : 0}
+                  onCommit={(v) => setEuler(i, v * (Math.PI / 180))}
+                  step={1}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -256,18 +274,109 @@ export default function Inspector() {
               {node.geom.type}
             </Badge>
           </div>
-          <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
             {sizeLabels.map((label, i) => (
-              <SliderWithInput
-                key={label}
-                value={node.geom.size[i] ?? 0}
-                onChange={(v) => setSize(i, v)}
-                min={0.01}
-                max={2}
-                step={0.01}
-                label={label}
-              />
+              <div key={label} className="space-y-1">
+                <Label className="text-xs text-muted-foreground">{label}</Label>
+                <NumberInput
+                  value={Number.isFinite(node.geom.size[i]) ? node.geom.size[i] : 0}
+                  onCommit={(v) => setSize(i, v)}
+                  step={0.01}
+                  min={0}
+                />
+              </div>
             ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Visual + physics flags */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center">Visual and Contact</Label>
+          {/* RGBA on its own line */}
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Color (RGBA 0..1)</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <NumberInput
+                  key={i}
+                  value={node.geom.rgba?.[i] ?? (i === 3 ? 1 : 0.5)}
+                  onCommit={(val) => {
+                    const arr = [...(node.geom.rgba ?? [0.5, 0.5, 0.5, 1])] as [number, number, number, number];
+                    arr[i] = Math.min(1, Math.max(0, val));
+                    const rgba = arr as [number, number, number, number];
+                    const nodes = useMjcfEditorStore.getState().nodes.map(n => n.id === node.id ? { ...n, geom: { ...n.geom, rgba } } : n);
+                    useMjcfEditorStore.setState({ nodes });
+                    useMjcfEditorStore.getState().rebuildXml();
+                  }}
+                  step={0.01}
+                  min={0}
+                  max={1}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Other flags */}
+          <div className="grid grid-cols-4 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Group</Label>
+              <NumberInput
+                value={node.geom.group ?? 0}
+                onCommit={(val) => {
+                  val = Math.max(0, Math.floor(val));
+                  const nodes = useMjcfEditorStore.getState().nodes.map(n => n.id === node.id ? { ...n, geom: { ...n.geom, group: val } } : n);
+                  useMjcfEditorStore.setState({ nodes });
+                  useMjcfEditorStore.getState().rebuildXml();
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Contype</Label>
+              <NumberInput
+                value={node.geom.contype ?? 0}
+                onCommit={(val) => {
+                  val = Math.max(0, Math.floor(val));
+                  const nodes = useMjcfEditorStore.getState().nodes.map(n => n.id === node.id ? { ...n, geom: { ...n.geom, contype: val } } : n);
+                  useMjcfEditorStore.setState({ nodes });
+                  useMjcfEditorStore.getState().rebuildXml();
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Conaffinity</Label>
+              <NumberInput
+                value={node.geom.conaffinity ?? 0}
+                onCommit={(val) => {
+                  val = Math.max(0, Math.floor(val));
+                  const nodes = useMjcfEditorStore.getState().nodes.map(n => n.id === node.id ? { ...n, geom: { ...n.geom, conaffinity: val } } : n);
+                  useMjcfEditorStore.setState({ nodes });
+                  useMjcfEditorStore.getState().rebuildXml();
+                }}
+              />
+            </div>
+            <div className="space-y-1 col-span-2">
+              <Label className="text-xs text-muted-foreground">Friction (slide, spin, roll)</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <NumberInput
+                    key={i}
+                    value={node.geom.friction?.[i] ?? 0.5}
+                    onCommit={(val) => {
+                      const arr = [...(node.geom.friction ?? [0.5, 0.5, 0.5])] as [number, number, number];
+                      arr[i] = Math.max(0, val);
+                      const friction = arr as [number, number, number];
+                      const nodes = useMjcfEditorStore.getState().nodes.map(n => n.id === node.id ? { ...n, geom: { ...n.geom, friction } } : n);
+                      useMjcfEditorStore.setState({ nodes });
+                      useMjcfEditorStore.getState().rebuildXml();
+                    }}
+                    step={0.01}
+                    min={0}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>

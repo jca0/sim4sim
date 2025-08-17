@@ -47,6 +47,10 @@ export function parseMjcfXml(xmlString: string): BodyNode[] {
     const typeAttr = (geomEl?.getAttribute("type") || "box").trim() as GeomType;
     const size = parseNumberArray(geomEl?.getAttribute("size"));
     const rgba = parseNumberArray(geomEl?.getAttribute("rgba"));
+    const groupAttr = geomEl?.getAttribute("group");
+    const contypeAttr = geomEl?.getAttribute("contype");
+    const conaffinityAttr = geomEl?.getAttribute("conaffinity");
+    const frictionArr = parseNumberArray(geomEl?.getAttribute("friction"));
 
     const node: BodyNode = {
       id: uniqueName,
@@ -59,6 +63,10 @@ export function parseMjcfXml(xmlString: string): BodyNode[] {
           : "box",
         size: size.length ? size : [0.1, 0.1, 0.1],
         rgba: rgba.length === 4 ? [rgba[0], rgba[1], rgba[2], rgba[3]] : undefined,
+        group: groupAttr !== null && groupAttr !== undefined ? parseInt(groupAttr) : undefined,
+        contype: contypeAttr !== null && contypeAttr !== undefined ? parseInt(contypeAttr) : undefined,
+        conaffinity: conaffinityAttr !== null && conaffinityAttr !== undefined ? parseInt(conaffinityAttr) : undefined,
+        friction: frictionArr.length === 3 ? [frictionArr[0], frictionArr[1], frictionArr[2]] : undefined,
       },
     };
     return node;
