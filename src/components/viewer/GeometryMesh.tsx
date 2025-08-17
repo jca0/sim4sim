@@ -17,12 +17,22 @@ export function GeometryMesh({ node, registerMesh }: GeometryMeshProps) {
     select: state.select
   }));
 
+  // Early return if node data is invalid
+  if (!node || !node.geom || !node.pos || !node.quat || !node.geom.size) {
+    console.warn('Invalid node data, skipping render:', node);
+    return null;
+  }
+
   const isSelected = selection === node.id;
 
   // Register mesh reference when component mounts/updates
   useEffect(() => {
     if (meshRef.current) {
-      registerMesh(node.id, meshRef.current);
+      try {
+        registerMesh(node.id, meshRef.current);
+      } catch (error) {
+        console.warn('Error registering mesh for node:', node.id, error);
+      }
     }
     
     // Cleanup on unmount
@@ -36,25 +46,56 @@ export function GeometryMesh({ node, registerMesh }: GeometryMeshProps) {
     select(node.id);
   };
 
-  // Convert quaternion to Euler for rotation
-  const quaternion = new THREE.Quaternion(node.quat[1], node.quat[2], node.quat[3], node.quat[0]);
+  // Validate and clean position values
+  const safePosition = node.pos.map(v => Number.isFinite(v) ? v : 0) as [number, number, number];
+  
+  // Validate and clean quaternion values
+  const safeQuat = node.quat.map(v => Number.isFinite(v) ? v : 0);
+  // Ensure quaternion is normalized - if all zeros, use identity quaternion
+  const quatMagnitude = Math.sqrt(safeQuat.reduce((sum, v) => sum + v * v, 0));
+  const normalizedQuat = quatMagnitude > 0 ? safeQuat.map(v => v / quatMagnitude) : [1, 0, 0, 0];
+  
+  // Create quaternion with additional validation
+  const quaternion = new THREE.Quaternion(
+    Number.isFinite(normalizedQuat[1]) ? normalizedQuat[1] : 0,
+    Number.isFinite(normalizedQuat[2]) ? normalizedQuat[2] : 0, 
+    Number.isFinite(normalizedQuat[3]) ? normalizedQuat[3] : 0,
+    Number.isFinite(normalizedQuat[0]) ? normalizedQuat[0] : 1
+  );
+  
+  // Ensure quaternion is normalized (Three.js requirement)
+  if (!quaternion.length()) {
+    quaternion.set(0, 0, 0, 1); // Identity quaternion
+  } else {
+    quaternion.normalize();
+  }
 
   let geometry = null;
   const { type, size } = node.geom;
+  
+  // Validate and clean geometry size values
+  const safeSize = size.map(v => Math.max(0.001, Number.isFinite(v) ? Math.abs(v) : 0.1));
 
   switch (type) {
     case 'sphere':
-      geometry = <sphereGeometry args={[size[0], 16, 16]} />;
+      const sphereRadius = Math.max(0.01, Math.min(10, safeSize[0] || 0.1));
+      geometry = <sphereGeometry args={[sphereRadius, 16, 16]} />;
       break;
     case 'box':
-      geometry = <boxGeometry args={[size[0] * 2, size[1] * 2, size[2] * 2]} />;
+      const boxX = Math.max(0.01, Math.min(10, safeSize[0] || 0.1)) * 2;
+      const boxY = Math.max(0.01, Math.min(10, safeSize[1] || 0.1)) * 2;
+      const boxZ = Math.max(0.01, Math.min(10, safeSize[2] || 0.1)) * 2;
+      geometry = <boxGeometry args={[boxX, boxY, boxZ]} />;
       break;
     case 'capsule':
-      // Approximate capsule as cylinder with spheres at ends
-      geometry = <capsuleGeometry args={[size[0], size[1] * 2, 8, 16]} />;
+      const capsuleRadius = Math.max(0.01, Math.min(5, safeSize[0] || 0.05));
+      const capsuleHeight = Math.max(0.02, Math.min(20, safeSize[1] || 0.2)) * 2;
+      geometry = <capsuleGeometry args={[capsuleRadius, capsuleHeight, 8, 16]} />;
       break;
     case 'cylinder':
-      geometry = <cylinderGeometry args={[size[0], size[0], size[1] * 2, 16]} />;
+      const cylinderRadius = Math.max(0.01, Math.min(5, safeSize[0] || 0.05));
+      const cylinderHeight = Math.max(0.02, Math.min(20, safeSize[1] || 0.2)) * 2;
+      geometry = <cylinderGeometry args={[cylinderRadius, cylinderRadius, cylinderHeight, 16]} />;
       break;
     default:
       geometry = <boxGeometry args={[0.1, 0.1, 0.1]} />;
@@ -63,11 +104,24 @@ export function GeometryMesh({ node, registerMesh }: GeometryMeshProps) {
   return (
     <mesh
       ref={meshRef}
-      position={node.pos}
-      quaternion={quaternion}
+      position={[
+        Number.isFinite(safePosition[0]) ? safePosition[0] : 0,
+        Number.isFinite(safePosition[1]) ? safePosition[1] : 0,
+        Number.isFinite(safePosition[2]) ? safePosition[2] : 0
+      ]}
+      quaternion={[
+        Number.isFinite(quaternion.x) ? quaternion.x : 0,
+        Number.isFinite(quaternion.y) ? quaternion.y : 0,
+        Number.isFinite(quaternion.z) ? quaternion.z : 0,
+        Number.isFinite(quaternion.w) ? quaternion.w : 1
+      ]}
       onClick={handleClick}
-      onPointerOver={() => document.body.style.cursor = 'pointer'}
-      onPointerOut={() => document.body.style.cursor = 'auto'}
+      onPointerOver={() => {
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto';
+      }}
     >
       {geometry}
       <meshStandardMaterial
@@ -79,9 +133,9 @@ export function GeometryMesh({ node, registerMesh }: GeometryMeshProps) {
       {isSelected && (
         <mesh>
           <boxGeometry args={[
-            type === 'box' ? size[0] * 2.1 : size[0] * 2.1,
-            type === 'box' ? size[1] * 2.1 : size[0] * 2.1,
-            type === 'box' ? size[2] * 2.1 : size[1] * 2.1
+            Math.max(0.01, (type === 'box' ? safeSize[0] * 2.1 : safeSize[0] * 2.1)),
+            Math.max(0.01, (type === 'box' ? safeSize[1] * 2.1 : safeSize[0] * 2.1)),
+            Math.max(0.01, (type === 'box' ? safeSize[2] * 2.1 : (safeSize[1] || safeSize[0]) * 2.1))
           ]} />
           <meshBasicMaterial color="#ff6b6b" wireframe opacity={0.5} transparent />
         </mesh>

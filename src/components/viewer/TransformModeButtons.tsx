@@ -1,5 +1,7 @@
 "use client";
 
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Move, RotateCw, Scale } from 'lucide-react';
 import type { TransformMode } from '@/hooks/useTransformMode';
 
 interface TransformModeButtonsProps {
@@ -12,27 +14,34 @@ export function TransformModeButtons({
   setTransformMode 
 }: TransformModeButtonsProps) {
   const modes = [
-    { key: 'translate', label: 'Move', icon: '↔️' },
-    { key: 'rotate', label: 'Rotate', icon: '🔄' },
-    { key: 'scale', label: 'Scale', icon: '📏' }
+    { key: 'translate', label: 'Move', icon: Move },
+    { key: 'rotate', label: 'Rotate', icon: RotateCw },
+    { key: 'scale', label: 'Scale', icon: Scale }
   ] as const;
 
   return (
-    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 flex gap-2">
-      {modes.map((mode) => (
-        <button
-          key={mode.key}
-          onClick={() => setTransformMode(mode.key)}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-            transformMode === mode.key
-              ? 'bg-blue-600 text-white shadow-lg scale-105'
-              : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100 hover:scale-105 shadow-md'
-          }`}
-        >
-          <span className="text-lg">{mode.icon}</span>
-          <span>{mode.label}</span>
-        </button>
-      ))}
+    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+      <ToggleGroup 
+        type="single" 
+        value={transformMode} 
+        onValueChange={(value) => value && setTransformMode(value as TransformMode)}
+        className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border shadow-lg rounded-full p-1 gap-2"
+      >
+        {modes.map((mode) => {
+          const IconComponent = mode.icon;
+          return (
+            <ToggleGroupItem
+              key={mode.key}
+              value={mode.key}
+              aria-label={mode.label}
+              className="rounded-full px-3 py-1.5 cursor-pointer transition-colors data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <IconComponent className="h-4 w-4" />
+              <span className="ml-2">{mode.label}</span>
+            </ToggleGroupItem>
+          );
+        })}
+      </ToggleGroup>
     </div>
   );
 }

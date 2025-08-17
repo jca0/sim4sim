@@ -1,9 +1,14 @@
 "use client";
 
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Download, Code } from "lucide-react";
 
 export default function XmlPreview() {
   const xml = useMjcfEditorStore((s) => s.xml);
+  const setXml = useMjcfEditorStore((s) => s.setXml);
 
   const download = () => {
     const blob = new Blob([xml], { type: "application/xml" });
@@ -16,21 +21,31 @@ export default function XmlPreview() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-3 py-2 border-b">
-        <div className="text-sm font-semibold opacity-70">XML</div>
-        <button
+    <Card className="h-64 flex flex-col border-0 shadow-none">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 flex-shrink-0">
+        <CardTitle className="text-sm flex items-center">
+          <Code className="mr-2 h-4 w-4" />
+          XML Output
+        </CardTitle>
+        <Button
           onClick={download}
-          className="text-xs border rounded px-2 py-1 hover:bg-black/5 dark:hover:bg-white/10"
+          size="sm"
+          variant="outline"
+          className="h-8 cursor-pointer hover:scale-105 transition-transform"
         >
+          <Download className="mr-2 h-3 w-3" />
           Download
-        </button>
-      </div>
-      <pre className="flex-1 overflow-auto p-3 text-xs bg-black/5 dark:bg-white/5 whitespace-pre-wrap break-words">
-{xml}
-      </pre>
-    </div>
+        </Button>
+      </CardHeader>
+      <CardContent className="flex-1 p-0 min-h-0">
+        <ScrollArea className="h-full">
+          <textarea
+            className="p-4 text-xs font-mono whitespace-pre bg-muted/50 w-full h-44 outline-none border-0 resize-none"
+            value={xml}
+            onChange={(e) => setXml(e.target.value)}
+          />
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }
-
-
