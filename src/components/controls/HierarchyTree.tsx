@@ -53,7 +53,7 @@ export default function HierarchyTree() {
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center">
           <Layers3 className="mr-2 h-4 w-4" />
           Hierarchy

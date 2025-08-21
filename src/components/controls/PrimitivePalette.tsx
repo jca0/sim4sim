@@ -17,7 +17,7 @@ export default function PrimitivePalette() {
 
   return (
     <Card className="border-0 shadow-none">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm">Add Primitives</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-2">

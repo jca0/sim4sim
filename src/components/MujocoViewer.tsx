@@ -12,6 +12,7 @@ export default function MujocoViewer() {
   const { transformMode, setTransformMode } = useTransformMode();
   const undo = useMjcfEditorStore((s) => s.undo);
   const redo = useMjcfEditorStore((s) => s.redo);
+  const selection = useMjcfEditorStore((s) => s.selection);
 
   return (
     <div className="w-full h-full relative">
@@ -35,10 +36,12 @@ export default function MujocoViewer() {
         </button>
       </div>
       {/* Transform mode buttons */}
-      <TransformModeButtons 
-        transformMode={transformMode} 
-        setTransformMode={setTransformMode} 
-      />
+      {selection && (
+        <TransformModeButtons 
+          transformMode={transformMode} 
+          setTransformMode={setTransformMode} 
+        />
+      )}
 
       <Canvas
         shadows

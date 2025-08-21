@@ -199,7 +199,7 @@ export default function Inspector() {
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none">
-      <CardHeader className="pb-3 flex-shrink-0">
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-sm flex items-center">
           <Settings className="mr-2 h-4 w-4" />
           Inspector

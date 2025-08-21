@@ -83,7 +83,7 @@ export default function EditorPage() {
   }, [deleteSelected, undo, redo]);
   return (
     <div className="grid grid-rows-[auto_1fr] h-screen bg-background overflow-hidden">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2 flex items-center gap-3">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 py-1.5 flex items-center gap-2">
         <div className="font-semibold">MJCF Editor</div>
         <div className="opacity-60 text-sm">Primitives • Hierarchy • Live XML</div>
       </header>
@@ -106,7 +106,7 @@ export default function EditorPage() {
           >
             <ChevronLeft className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           </button>
-          <div className="p-3 space-y-4 overflow-auto flex-1">
+          <div className="p-2 space-y-3 overflow-auto flex-1">
             <PrimitivePalette />
             <HierarchyTree />
           </div>
@@ -135,13 +135,13 @@ export default function EditorPage() {
           </button>
           <ResizablePanelGroup direction="vertical" className="min-h-0 flex-1">
             <ResizablePanel defaultSize={45} minSize={20}>
-              <div className="p-3 h-full overflow-auto">
+              <div className="p-2 h-full overflow-auto">
                 <XmlPreview />
               </div>
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={55} minSize={20}>
-              <div className="p-3 h-full overflow-auto">
+              <div className="p-2 h-full overflow-auto">
                 <Inspector />
               </div>
             </ResizablePanel>

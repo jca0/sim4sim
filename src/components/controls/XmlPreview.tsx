@@ -80,7 +80,7 @@ export default function XmlPreview() {
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none">
-      <CardHeader ref={headerRef} className="flex flex-row items-center justify-between space-y-0 pb-3 flex-shrink-0">
+      <CardHeader ref={headerRef} className="flex flex-row items-center justify-between space-y-0 pb-2 flex-shrink-0">
         <CardTitle className="text-sm flex items-center">
           <Code className="mr-2 h-4 w-4" />
           {isEditMode ? "XML Editor" : "XML Output"}
