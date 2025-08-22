@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="test">
+  <worldbody>
+    <body name="body" pos="-0.3381798416337627 0.849225910060298 1.0733928298882789" quat="0.5823856420908603 -0.1497468351892326 0.5976328857015435 -0.5303185676225859">
+      <geom type="cylinder" name="cylinder" size="0.05 0.05 0.05"/>
+    </body>
+  </worldbody>
+</mujoco>
