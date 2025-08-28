@@ -21,6 +21,11 @@ export default function XmlPreview() {
   const headerRef = useRef<HTMLDivElement | null>(null);
   const [compact, setCompact] = useState(false);
   const debounceRef = useRef<number | null>(null);
+  const editorRef = useRef<any>(null);
+  const isTypingRef = useRef(false);
+  const typingTimeoutRef = useRef<number | null>(null);
+  const lastAppliedStoreXmlRef = useRef<string>(xml);
+  const pendingSyncTimeoutRef = useRef<number | null>(null);
 
   // Do not resync draft from xml while typing to avoid cursor jump
 
@@ -37,6 +42,43 @@ export default function XmlPreview() {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Sync incoming store XML (e.g., from hierarchy changes) into editor when user is idle/not focused
+  useEffect(() => {
+    if (xml === lastAppliedStoreXmlRef.current) return;
+    if (xml === draft) {
+      lastAppliedStoreXmlRef.current = xml;
+      return;
+    }
+
+    const attemptApply = () => {
+      const editorHasFocus = editorRef.current?.hasTextFocus?.() ?? false;
+      if (!isTypingRef.current && !editorHasFocus) {
+        setDraft(xml);
+        setError(null);
+        lastAppliedStoreXmlRef.current = xml;
+        if (pendingSyncTimeoutRef.current) {
+          window.clearTimeout(pendingSyncTimeoutRef.current);
+          pendingSyncTimeoutRef.current = null;
+        }
+      } else {
+        if (pendingSyncTimeoutRef.current) {
+          window.clearTimeout(pendingSyncTimeoutRef.current);
+        }
+        pendingSyncTimeoutRef.current = window.setTimeout(attemptApply, 300);
+      }
+    };
+
+    attemptApply();
+
+    return () => {
+      if (pendingSyncTimeoutRef.current) {
+        window.clearTimeout(pendingSyncTimeoutRef.current);
+        pendingSyncTimeoutRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xml]);
 
   const download = () => {
     const blob = new Blob([xml], { type: "application/xml" });
@@ -77,11 +119,23 @@ export default function XmlPreview() {
               defaultLanguage="xml"
               path="xml-editor.mjcf.xml"
               keepCurrentModel
+              onMount={(editor) => {
+                editorRef.current = editor;
+              }}
               value={draft}
               onChange={(val) => {
                 const text = val ?? "";
                 setDraft(text);
                 setError(null);
+
+                // Mark as typing and reset idle timer
+                isTypingRef.current = true;
+                if (typingTimeoutRef.current) {
+                  window.clearTimeout(typingTimeoutRef.current);
+                }
+                typingTimeoutRef.current = window.setTimeout(() => {
+                  isTypingRef.current = false;
+                }, 500);
 
                 // Debounce applying to store to avoid cursor jumps
                 if (debounceRef.current) {
@@ -91,6 +145,7 @@ export default function XmlPreview() {
                   try {
                     parseMjcfXml(text);
                     setXml(text);
+                    lastAppliedStoreXmlRef.current = text;
                     setError(null);
                   } catch {
                     setError("XML is not valid. Fix the errors and try again.");
