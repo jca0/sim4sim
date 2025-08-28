@@ -16,16 +16,13 @@ const MonacoEditor = dynamic(
 export default function XmlPreview() {
   const xml = useMjcfEditorStore((s) => s.xml);
   const setXml = useMjcfEditorStore((s) => s.setXml);
-  const [draft, setDraft] = useState<string>("");
+  const [draft, setDraft] = useState<string>(xml);
   const [error, setError] = useState<string | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const [compact, setCompact] = useState(false);
+  const debounceRef = useRef<number | null>(null);
 
-  // Keep local editor buffer in sync with canonical XML when it changes externally
-  useEffect(() => {
-    setDraft(xml);
-    setError(null);
-  }, [xml]);
+  // Do not resync draft from xml while typing to avoid cursor jump
 
   // Make header actions responsive to available width in the right pane
   useEffect(() => {
@@ -78,18 +75,27 @@ export default function XmlPreview() {
             <MonacoEditor
               height="100%"
               defaultLanguage="xml"
+              path="xml-editor.mjcf.xml"
+              keepCurrentModel
               value={draft}
               onChange={(val) => {
                 const text = val ?? "";
                 setDraft(text);
-                try {
-                  // Validate to surface errors while typing; only update store on valid XML
-                  parseMjcfXml(text);
-                  setXml(text);
-                  setError(null);
-                } catch {
-                  setError("XML is not valid. Fix the errors and try again.");
+                setError(null);
+
+                // Debounce applying to store to avoid cursor jumps
+                if (debounceRef.current) {
+                  window.clearTimeout(debounceRef.current);
                 }
+                debounceRef.current = window.setTimeout(() => {
+                  try {
+                    parseMjcfXml(text);
+                    setXml(text);
+                    setError(null);
+                  } catch {
+                    setError("XML is not valid. Fix the errors and try again.");
+                  }
+                }, 250);
               }}
               options={{
                 wordWrap: "on",
