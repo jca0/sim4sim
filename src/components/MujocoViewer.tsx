@@ -4,7 +4,6 @@ import { Canvas } from '@react-three/fiber';
 import { useTransformMode } from '@/hooks/useTransformMode';
 import { Scene } from '@/components/viewer/Scene';
 import { TransformModeButtons } from '@/components/viewer/TransformModeButtons';
-import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Circle, Square, Cylinder, Pill, Shapes } from 'lucide-react';
 import * as THREE from 'three';
@@ -40,13 +39,12 @@ export default function MujocoViewer() {
         </button>
       </div>
       {/* Floating bottom toolbar (Figma-like) */}
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 flex items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-full shadow-lg px-2 py-1.5">
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 flex items-center gap-1 bg-[var(--vscode-sideBar-background,#252526)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--vscode-sideBar-background,#252526)]/80 border border-[var(--vscode-editorGroup-border,#2d2d2d)] rounded-md shadow-xl px-1 py-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="ghost" className="h-8 rounded-full cursor-pointer">
-              <Shapes className="w-4 h-4 mr-2" />
-              Primitives
-            </Button>
+            <button className="h-8 w-8 rounded-md hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] flex items-center justify-center cursor-pointer" title="Primitives">
+              <Shapes className="w-4 h-4" />
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" sideOffset={6}>
             <DropdownMenuItem onClick={() => addPrimitive('sphere')} className="cursor-pointer"><Circle className="w-4 h-4 mr-2" />Sphere</DropdownMenuItem>
@@ -55,7 +53,6 @@ export default function MujocoViewer() {
             <DropdownMenuItem onClick={() => addPrimitive('cylinder')} className="cursor-pointer"><Cylinder className="w-4 h-4 mr-2" />Cylinder</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <div className="h-6 w-px bg-border mx-1" />
         <TransformModeButtons 
           transformMode={transformMode} 
           setTransformMode={setTransformMode} 

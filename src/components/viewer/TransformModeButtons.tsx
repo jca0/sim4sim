@@ -24,7 +24,7 @@ export function TransformModeButtons({
       type="single" 
       value={transformMode} 
       onValueChange={(value) => value && setTransformMode(value as TransformMode)}
-      className="rounded-full p-1 gap-2"
+      className="p-0 gap-1"
     >
       {modes.map((mode) => {
         const IconComponent = mode.icon;
@@ -33,10 +33,10 @@ export function TransformModeButtons({
             key={mode.key}
             value={mode.key}
             aria-label={mode.label}
-            className="rounded-full px-3 py-1.5 cursor-pointer transition-colors data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-accent hover:text-accent-foreground"
+            title={mode.label}
+            className="h-8 w-8 p-0 cursor-pointer transition-colors rounded-md border border-transparent data-[state=on]:bg-[var(--vscode-list-activeSelectionBackground,#094771)] data-[state=on]:text-[var(--vscode-list-activeSelectionForeground,#ffffff)] hover:bg-[var(--vscode-toolbar-hoverBackground,#2a2d2e)] hover:text-[var(--vscode-foreground,#d4d4d4)] flex items-center justify-center"
           >
             <IconComponent className="h-4 w-4" />
-            <span className="ml-2">{mode.label}</span>
           </ToggleGroupItem>
         );
       })}

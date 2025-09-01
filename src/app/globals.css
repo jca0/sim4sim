@@ -152,4 +152,7 @@
   --vscode-list-activeSelectionBackground: #094771;
   --vscode-list-activeSelectionForeground: #ffffff;
   --vscode-list-inactiveSelectionBackground: #37373d;
+
+  /* Toolbar hover background (viewer toolbar) */
+  --vscode-toolbar-hoverBackground: #2a2d2e;
 }
