@@ -34,6 +34,7 @@ export default function HierarchyTree() {
   const renameSelected = useMjcfEditorStore((s) => s.renameSelected);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [draftName, setDraftName] = React.useState<string>("");
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
 
   const startRename = (id: string, currentName: string) => {
     select(id);
@@ -55,21 +56,89 @@ export default function HierarchyTree() {
     setEditingId(null);
   };
 
+  // Exit rename when selection changes or deselects
+  React.useEffect(() => {
+    if (editingId && selection !== editingId) {
+      setEditingId(null);
+    }
+  }, [selection, editingId]);
+
+  // Deselect when clicking anywhere outside the explorer container
+  React.useEffect(() => {
+    const onGlobalMouseDown = (e: MouseEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const target = e.target as Node | null;
+      if (target && !el.contains(target)) {
+        if (editingId) {
+          // defer to allow input onBlur to commit first
+          setTimeout(() => {
+            selectOne(null);
+            setEditingId(null);
+          }, 0);
+        } else {
+          selectOne(null);
+        }
+      }
+    };
+    document.addEventListener('mousedown', onGlobalMouseDown, true);
+    return () => document.removeEventListener('mousedown', onGlobalMouseDown, true);
+  }, [editingId, selectOne]);
+
+  // Keyboard shortcuts like VS Code: F2 rename, Delete already handled globally
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      const sel = selection;
+      if (!sel) return;
+      const node = nodes.find(n => n.id === sel);
+      if (!node) return;
+      startRename(sel, node.name);
+    }
+    if (e.key === 'Enter' && !editingId) {
+      // VS Code: Enter starts rename on focused/selected item
+      e.preventDefault();
+      const sel = selection;
+      if (!sel) return;
+      const node = nodes.find(n => n.id === sel);
+      if (!node) return;
+      startRename(sel, node.name);
+    }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && !editingId) {
+      e.preventDefault();
+      deleteSelected();
+    }
+    if (e.key === 'Escape' && editingId) {
+      e.preventDefault();
+      setEditingId(null);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 p-0">
         <ScrollArea className="h-full">
-          <div className="p-3 space-y-1">
+          <div
+            ref={containerRef}
+            tabIndex={0}
+            onKeyDown={onKeyDown}
+            className="py-0.5 outline-none"
+            onMouseDown={(e) => {
+              // Clicking empty space clears selection
+              if (e.currentTarget === e.target) {
+                selectOne(null);
+              }
+            }}
+          >
             {nodes.map((n) => (
               <ContextMenu key={n.id}>
                 <ContextMenuTrigger className="w-full">
-                  <Button
-                    asChild
-                    variant={selections.includes(n.id) ? "secondary" : "ghost"}
-                    className="w-full justify-start h-auto p-2 cursor-pointer"
-                  >
                     <div
-                      className="w-full flex items-center gap-2"
+                      className={`w-full flex items-center gap-2 px-2 py-1 text-[11px] cursor-pointer ${
+                        selections.includes(n.id)
+                          ? 'bg-[var(--vscode-list-activeSelectionBackground,#094771)] text-[var(--vscode-list-activeSelectionForeground,#fff)]'
+                          : 'hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)]'
+                      }`}
                       onClick={(e) => {
                         if (e.shiftKey) {
                           selectRangeTo(n.id);
@@ -81,10 +150,7 @@ export default function HierarchyTree() {
                       }}
                       onContextMenu={() => selectOne(n.id)}
                     >
-                      <Box className="mr-2 h-3 w-3 shrink-0" />
-                      <Badge variant="outline" className="mr-2 text-xs">
-                        body
-                      </Badge>
+                      <Box className="mr-2 h-3.5 w-3.5 shrink-0 opacity-80" />
                       {editingId === n.id ? (
                         <Input
                           autoFocus
@@ -95,10 +161,10 @@ export default function HierarchyTree() {
                             if (e.key === 'Enter') commitRename();
                             if (e.key === 'Escape') cancelRename();
                           }}
-                          className="h-7 text-xs font-mono px-2 w-40"
+                          className="h-5 text-[11px] font-mono px-1.5 w-40"
                         />
                       ) : (
-                        <span className="font-mono text-xs truncate">{n.name}</span>
+                        <span className="font-mono text-[11px] truncate">{n.name}</span>
                       )}
                       <div className="ml-auto">
                         <DropdownMenu>
@@ -132,7 +198,6 @@ export default function HierarchyTree() {
                         </DropdownMenu>
                       </div>
                     </div>
-                  </Button>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
                   <ContextMenuItem onClick={() => startRename(n.id, n.name)}>

@@ -146,4 +146,10 @@
 
   --vscode-statusBar-background: #007acc;
   --vscode-statusBar-foreground: #ffffff;
+
+  /* List/Explorer */
+  --vscode-list-hoverBackground: #2a2d2e;
+  --vscode-list-activeSelectionBackground: #094771;
+  --vscode-list-activeSelectionForeground: #ffffff;
+  --vscode-list-inactiveSelectionBackground: #37373d;
 }
