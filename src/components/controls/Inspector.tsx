@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Panels should render body-only (no cards)
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -176,19 +176,9 @@ export default function Inspector() {
 
   if (!node) {
     return (
-      <Card className="border-0 shadow-none">
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center">
-            <Settings className="mr-2 h-4 w-4" />
-            Inspector
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Select a body to edit its properties.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="p-3 text-sm text-muted-foreground">
+        Select a body to edit its properties.
+      </div>
     );
   }
 
@@ -222,14 +212,8 @@ export default function Inspector() {
       : ["Radius", "Half Height"]; // capsule/cylinder
 
   return (
-    <Card className="h-full flex flex-col border-0 shadow-none">
-      <CardHeader className="pb-2 flex-shrink-0">
-        <CardTitle className="text-sm flex items-center">
-          <Settings className="mr-2 h-4 w-4" />
-          Inspector
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-auto space-y-4">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 overflow-auto space-y-4 p-3">
         {/* Body Info */}
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground">Body Name</Label>
@@ -422,8 +406,8 @@ export default function Inspector() {
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

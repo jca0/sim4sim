@@ -8,6 +8,8 @@ import { parseMjcfXml } from "@/lib/mjcf/xmlParse";
 type EditorState = {
   nodes: BodyNode[];
   selection: string | null;
+  selections: string[];
+  selectionAnchor: string | null;
   xml: string;
   addPrimitive: (type: GeomType) => void;
   updateTransform: (
@@ -17,7 +19,11 @@ type EditorState = {
   ) => void;
   updateScale: (id: string, scale: [number, number, number]) => void;
   updateGeomSize: (id: string, index: number, value: number) => void;
-  select: (id: string | null) => void;
+  // Selection helpers (VS Code-like)
+  select: (id: string | null) => void; // alias of selectOne for backward compatibility
+  selectOne: (id: string | null) => void;
+  selectToggle: (id: string) => void;
+  selectRangeTo: (toId: string) => void;
   rebuildXml: () => void;
   reset: () => void;
   deleteSelected: () => void;
@@ -33,6 +39,8 @@ const nextId = (prefix: string) => `${prefix}_${++counter}`;
 export const useMjcfEditorStore = create<EditorState>((set, get) => ({
   nodes: [],
   selection: null,
+  selections: [],
+  selectionAnchor: null,
   xml: buildMjcfXml([]),
   // Internal undo/redo stacks kept in closure
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,7 +97,7 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     };
     const nodes = [...get().nodes, node];
     const xml = buildMjcfXml(nodes);
-    set({ nodes, selection: id, xml });
+    set({ nodes, selection: id, selections: [id], selectionAnchor: id, xml });
   },
   renameSelected: (newName: string) => {
     const sel = get().selection;
@@ -171,21 +179,55 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
     const xml = buildMjcfXml(nodes);
     set({ nodes, xml });
   },
-  select: (id) => set({ selection: id }),
+  // Selection API
+  select: (id) => {
+    // backward compatibility
+    const nextId = id ?? null;
+    set({ selection: nextId, selections: nextId ? [nextId] : [], selectionAnchor: nextId });
+  },
+  selectOne: (id) => {
+    const nextId = id ?? null;
+    set({ selection: nextId, selections: nextId ? [nextId] : [], selectionAnchor: nextId });
+  },
+  selectToggle: (id) => {
+    const current = get().selections;
+    const isSelected = current.includes(id);
+    const nextSelections = isSelected ? current.filter((s) => s !== id) : [...current, id];
+    const nextPrimary = id;
+    set({ selections: nextSelections, selection: nextPrimary, selectionAnchor: id });
+  },
+  selectRangeTo: (toId) => {
+    const nodes = get().nodes;
+    const anchor = get().selectionAnchor ?? get().selection;
+    if (!anchor) {
+      // no anchor -> behave like single select
+      set({ selection: toId, selections: [toId], selectionAnchor: toId });
+      return;
+    }
+    const startIndex = nodes.findIndex((n) => n.id === anchor);
+    const endIndex = nodes.findIndex((n) => n.id === toId);
+    if (startIndex === -1 || endIndex === -1) {
+      set({ selection: toId, selections: [toId], selectionAnchor: toId });
+      return;
+    }
+    const [lo, hi] = startIndex <= endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
+    const range = nodes.slice(lo, hi + 1).map((n) => n.id);
+    set({ selections: range, selection: toId });
+  },
   rebuildXml: () => set({ xml: buildMjcfXml(get().nodes) }),
   reset: () => {
     // @ts-expect-error internal helper in closure
     get().__pushUndo();
-    set({ nodes: [], selection: null, xml: buildMjcfXml([]) });
+    set({ nodes: [], selection: null, selections: [], selectionAnchor: null, xml: buildMjcfXml([]) });
   },
   deleteSelected: () => {
-    const selectedId = get().selection;
-    if (!selectedId) return;
+    const selectedIds = get().selections.length ? get().selections : (get().selection ? [get().selection as string] : []);
+    if (!selectedIds.length) return;
     // @ts-expect-error internal helper in closure
     get().__pushUndo();
-    const nodes = get().nodes.filter((n) => n.id !== selectedId);
+    const nodes = get().nodes.filter((n) => !selectedIds.includes(n.id));
     const xml = buildMjcfXml(nodes);
-    set({ nodes, selection: null, xml });
+    set({ nodes, selection: null, selections: [], selectionAnchor: null, xml });
   },
   undo: () => {
     // @ts-expect-error internal stacks in closure
@@ -224,7 +266,7 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
       get().__pushUndo();
       const nodes = parseMjcfXml(xmlString);
       const xml = buildMjcfXml(nodes);
-      set({ nodes, xml, selection: null });
+      set({ nodes, xml, selection: null, selections: [], selectionAnchor: null });
     } catch {
       // ignore parse errors to avoid locking UI while typing
     }

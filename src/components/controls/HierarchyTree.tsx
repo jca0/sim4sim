@@ -2,7 +2,7 @@
 
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Panels should render body-only (no cards)
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Layers3, Box, MoreVertical } from "lucide-react";
@@ -25,7 +25,11 @@ import { Input } from "@/components/ui/input";
 export default function HierarchyTree() {
   const nodes = useMjcfEditorStore((s) => s.nodes);
   const selection = useMjcfEditorStore((s) => s.selection);
+  const selections = useMjcfEditorStore((s) => s.selections);
   const select = useMjcfEditorStore((s) => s.select);
+  const selectOne = useMjcfEditorStore((s) => s.selectOne);
+  const selectToggle = useMjcfEditorStore((s) => s.selectToggle);
+  const selectRangeTo = useMjcfEditorStore((s) => s.selectRangeTo);
   const deleteSelected = useMjcfEditorStore((s) => s.deleteSelected);
   const renameSelected = useMjcfEditorStore((s) => s.renameSelected);
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -52,14 +56,8 @@ export default function HierarchyTree() {
   };
 
   return (
-    <Card className="h-full flex flex-col border-0 shadow-none">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center">
-          <Layers3 className="mr-2 h-4 w-4" />
-          Hierarchy
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 p-0">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 p-0">
         <ScrollArea className="h-full">
           <div className="p-3 space-y-1">
             {nodes.map((n) => (
@@ -67,13 +65,21 @@ export default function HierarchyTree() {
                 <ContextMenuTrigger className="w-full">
                   <Button
                     asChild
-                    variant={selection === n.id ? "secondary" : "ghost"}
+                    variant={selections.includes(n.id) ? "secondary" : "ghost"}
                     className="w-full justify-start h-auto p-2 cursor-pointer"
                   >
                     <div
                       className="w-full flex items-center gap-2"
-                      onClick={() => select(n.id)}
-                      onContextMenu={() => select(n.id)}
+                      onClick={(e) => {
+                        if (e.shiftKey) {
+                          selectRangeTo(n.id);
+                        } else if (e.metaKey || e.ctrlKey) {
+                          selectToggle(n.id);
+                        } else {
+                          selectOne(n.id);
+                        }
+                      }}
+                      onContextMenu={() => selectOne(n.id)}
                     >
                       <Box className="mr-2 h-3 w-3 shrink-0" />
                       <Badge variant="outline" className="mr-2 text-xs">
@@ -101,7 +107,7 @@ export default function HierarchyTree() {
                               className="opacity-70 p-1 rounded-full transition-colors cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                select(n.id);
+                                selectOne(n.id);
                               }}
                               onMouseDown={(e) => e.preventDefault()}
                               aria-label="Open menu"
@@ -116,7 +122,7 @@ export default function HierarchyTree() {
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={() => {
-                                select(n.id);
+                                selectOne(n.id);
                                 deleteSelected();
                               }}
                             >
@@ -146,8 +152,8 @@ export default function HierarchyTree() {
             ))}
           </div>
         </ScrollArea>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

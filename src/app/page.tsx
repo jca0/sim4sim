@@ -4,14 +4,17 @@ import HierarchyTree from "@/components/controls/HierarchyTree";
 import XmlPreview from "@/components/controls/XmlPreview";
 import Inspector from "@/components/controls/Inspector";
 import MujocoViewer from "@/components/MujocoViewer";
+import dynamic from "next/dynamic";
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
 import { useEffect, useRef, useState } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, GitBranch, Play, Puzzle, Settings, Layers3 } from "lucide-react";
 import type { ImperativePanelHandle } from "react-resizable-panels";
 
 
+
+const VscodeShell = dynamic(() => import("@/components/vscode/VscodeShell"), { ssr: false });
 
 export default function EditorPage() {
   const deleteSelected = useMjcfEditorStore((s) => s.deleteSelected);
@@ -81,101 +84,7 @@ export default function EditorPage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deleteSelected, undo, redo]);
-  return (
-    <div className="grid grid-rows-[auto_1fr] h-screen bg-background overflow-hidden">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 py-1.5 flex items-center gap-2">
-        <div className="font-semibold">MJCF Editor</div>
-        <div className="opacity-60 text-sm">Primitives • Hierarchy • Live XML</div>
-      </header>
-      <div className="relative min-h-0 h-full overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="min-h-0 h-full">
-          <ResizablePanel
-            ref={leftRef}
-            collapsible
-            collapsedSize={0}
-            defaultSize={22}
-            minSize={15}
-            onResize={(size: number) => setLeftSize(size)}
-            onCollapse={(...args: unknown[]) => setIsLeftCollapsed(true)}
-            className="bg-muted/30 overflow-hidden flex flex-col relative group"
-          >
-          <button
-            className="absolute top-1/2 -translate-y-1/2 -right-3 z-20 h-8 w-8 rounded-full bg-background border shadow inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={toggleLeft}
-            title={isLeftCollapsed ? "Expand left" : "Collapse left"}
-            aria-label={isLeftCollapsed ? "Expand left" : "Collapse left"}
-          >
-            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <div className="p-2 space-y-3 overflow-auto flex-1">
-            <PrimitivePalette />
-            <HierarchyTree />
-          </div>
-          </ResizablePanel>
-          <ResizableHandle />
-          <ResizablePanel defaultSize={56} minSize={35} className="overflow-hidden">
-          <MujocoViewer />
-          </ResizablePanel>
-          <ResizableHandle />
-          <ResizablePanel
-            ref={rightRef}
-            collapsible
-            collapsedSize={0}
-            defaultSize={22}
-            minSize={15}
-            onResize={(size: number) => setRightSize(size)}
-            onCollapse={(...args: unknown[]) => setIsRightCollapsed(true)}
-            className="bg-muted/30 overflow-hidden flex flex-col relative group"
-          >
-          <button
-            className="absolute top-1/2 -translate-y-1/2 -left-3 z-20 h-8 w-8 rounded-full bg-background border shadow inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={toggleRight}
-            title={isRightCollapsed ? "Expand right" : "Collapse right"}
-            aria-label={isRightCollapsed ? "Expand right" : "Collapse right"}
-          >
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <ResizablePanelGroup direction="vertical" className="min-h-0 flex-1">
-            <ResizablePanel defaultSize={45} minSize={20}>
-              <div className="p-2 h-full overflow-auto">
-                <XmlPreview />
-              </div>
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize={55} minSize={20}>
-              <div className="p-2 h-full overflow-auto">
-                <Inspector />
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-
-        {(isLeftCollapsed || leftSize <= 1) && (
-          <Button
-            size="icon"
-            variant="outline"
-            className="absolute top-1/2 -translate-y-1/2 left-2 z-30 h-8 w-8 rounded-full shadow cursor-pointer"
-            onClick={toggleLeft}
-            title="Expand left"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        )}
-        {(isRightCollapsed || rightSize <= 1) && (
-          <Button
-            size="icon"
-            variant="outline"
-            className="absolute top-1/2 -translate-y-1/2 right-2 z-30 h-8 w-8 rounded-full shadow cursor-pointer"
-            onClick={toggleRight}
-            title="Expand right"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    </div>
-  );
+  return <VscodeShell />;
 }
 
 

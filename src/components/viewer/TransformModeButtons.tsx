@@ -20,28 +20,26 @@ export function TransformModeButtons({
   ] as const;
 
   return (
-    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-      <ToggleGroup 
-        type="single" 
-        value={transformMode} 
-        onValueChange={(value) => value && setTransformMode(value as TransformMode)}
-        className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border shadow-lg rounded-full p-1 gap-2"
-      >
-        {modes.map((mode) => {
-          const IconComponent = mode.icon;
-          return (
-            <ToggleGroupItem
-              key={mode.key}
-              value={mode.key}
-              aria-label={mode.label}
-              className="rounded-full px-3 py-1.5 cursor-pointer transition-colors data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <IconComponent className="h-4 w-4" />
-              <span className="ml-2">{mode.label}</span>
-            </ToggleGroupItem>
-          );
-        })}
-      </ToggleGroup>
-    </div>
+    <ToggleGroup 
+      type="single" 
+      value={transformMode} 
+      onValueChange={(value) => value && setTransformMode(value as TransformMode)}
+      className="rounded-full p-1 gap-2"
+    >
+      {modes.map((mode) => {
+        const IconComponent = mode.icon;
+        return (
+          <ToggleGroupItem
+            key={mode.key}
+            value={mode.key}
+            aria-label={mode.label}
+            className="rounded-full px-3 py-1.5 cursor-pointer transition-colors data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <IconComponent className="h-4 w-4" />
+            <span className="ml-2">{mode.label}</span>
+          </ToggleGroupItem>
+        );
+      })}
+    </ToggleGroup>
   );
 }
