@@ -39,6 +39,7 @@ export function TransformControlsComponent({
     <TransformControls
       object={targetMesh}
       mode={transformMode}
+      enabled={!!targetMesh}
       onMouseDown={() => handleMouseDown(transformMode, targetMesh, orbitRef)}
       onObjectChange={() => handleObjectChange(transformMode, targetMesh)}
       onMouseUp={() => handleMouseUp(orbitRef)}

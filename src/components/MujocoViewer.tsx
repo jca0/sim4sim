@@ -11,7 +11,6 @@ import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 
 export default function MujocoViewer() {
   const { transformMode, setTransformMode } = useTransformMode();
-  const selection = useMjcfEditorStore((s) => s.selection);
   const addPrimitive = useMjcfEditorStore((s) => s.addPrimitive);
 
   return (

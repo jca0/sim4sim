@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMjcfEditorStore } from '@/contexts/MjcfEditorStore';
 import * as THREE from 'three';
 import type { TransformMode } from './useTransformMode';
@@ -15,6 +15,26 @@ export function useTransformControls() {
   
   const [initialScale, setInitialScale] = useState<THREE.Vector3 | null>(null);
   const [lastReportedScale, setLastReportedScale] = useState<THREE.Vector3 | null>(null);
+  const isShiftPressedRef = useRef(false);
+  const isAltPressedRef = useRef(false);
+
+  // Track modifier keys for fine/fast scaling modes
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') isShiftPressedRef.current = true;
+      if (e.key === 'Alt' || e.key === 'Option') isAltPressedRef.current = true;
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') isShiftPressedRef.current = false;
+      if (e.key === 'Alt' || e.key === 'Option') isAltPressedRef.current = false;
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
 
   const handleMouseDown = useCallback((
     transformMode: TransformMode, 
@@ -62,9 +82,16 @@ export function useTransformControls() {
           safeCurrentScale.z / (safeInitialScale.z || 1)
         );
 
-        // Always use coarse sensitivity
-        // factor' = 1 + (factor - 1) * sensitivity
-        const sensitivity = 0.18;
+        // Sensitivity with modifiers
+        // Base: responsive; Shift = fine; Alt/Option = fast
+        const baseSensitivity = 0.38;
+        const fineSensitivity = 0.16;
+        const fastSensitivity = 0.6;
+        const sensitivity = isAltPressedRef.current
+          ? fastSensitivity
+          : isShiftPressedRef.current
+          ? fineSensitivity
+          : baseSensitivity;
         const overallFactor = new THREE.Vector3(
           1 + (rawFactor.x - 1) * sensitivity,
           1 + (rawFactor.y - 1) * sensitivity,
@@ -79,9 +106,15 @@ export function useTransformControls() {
           (Number.isFinite(overallFactor.z) ? overallFactor.z : 1) / (last.z || 1)
         );
 
-        // Clamp per-tick change to keep it smooth using coarse range
-        const minStep = 0.7;
-        const maxStep = 1.6;
+        // If user drags inward past baseline, allow shrink by inverting step (<1)
+        // Ensure symmetrical behavior for <1 factors
+        incremental.x = Number.isFinite(incremental.x) ? incremental.x : 1;
+        incremental.y = Number.isFinite(incremental.y) ? incremental.y : 1;
+        incremental.z = Number.isFinite(incremental.z) ? incremental.z : 1;
+
+        // Clamp per-tick change to keep it smooth (tighter for fine, larger for fast)
+        const minStep = isShiftPressedRef.current ? 0.9 : 0.8;
+        const maxStep = isAltPressedRef.current ? 3.0 : 2.2;
         incremental.x = Math.max(minStep, Math.min(maxStep, incremental.x));
         incremental.y = Math.max(minStep, Math.min(maxStep, incremental.y));
         incremental.z = Math.max(minStep, Math.min(maxStep, incremental.z));
@@ -114,7 +147,7 @@ export function useTransformControls() {
       
       updateTransform(selectedNode.id, safePosition, normalizedQuat);
     }
-  }, [selection, nodes, updateTransform, updateScale, initialScale]);
+  }, [selection, nodes, updateTransform, updateScale, initialScale, lastReportedScale]);
 
   const handleMouseUp = useCallback((orbitRef: React.RefObject<OrbitControlsImpl | null>) => {
     // Re-enable orbit controls and clear state

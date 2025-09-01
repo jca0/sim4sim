@@ -24,7 +24,7 @@ export function TransformModeButtons({
       type="single" 
       value={transformMode} 
       onValueChange={(value) => value && setTransformMode(value as TransformMode)}
-      className="p-0 gap-1"
+      className="p-0 gap-1 pointer-events-auto"
     >
       {modes.map((mode) => {
         const IconComponent = mode.icon;

@@ -143,8 +143,8 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
       // Update geometry size based on scale and geometry type
       let newSize = [...n.geom.size];
       if (n.geom.type === 'sphere') {
-        // sphere: [r] -> scale uniformly
-        const uniformScale = Math.max(safeScale[0], safeScale[1], safeScale[2]);
+        // sphere: [r] -> use geometric mean for stable up/down scaling
+        const uniformScale = Math.cbrt(safeScale[0] * safeScale[1] * safeScale[2]);
         newSize[0] = Math.max(0.001, (n.geom.size[0] || 0.1) * uniformScale);
       } else if (n.geom.type === 'box') {
         // box: [sx, sy, sz] -> scale each dimension
@@ -152,8 +152,8 @@ export const useMjcfEditorStore = create<EditorState>((set, get) => ({
         newSize[1] = Math.max(0.001, (n.geom.size[1] || 0.1) * safeScale[1]); 
         newSize[2] = Math.max(0.001, (n.geom.size[2] || 0.1) * safeScale[2]);
       } else if (n.geom.type === 'capsule' || n.geom.type === 'cylinder') {
-        // capsule/cylinder: [r, halfheight] -> radius from x/z, height from y
-        const radialScale = Math.max(safeScale[0], safeScale[2]);
+        // capsule/cylinder: [r, halfheight] -> radius from x/z (geometric mean), height from y
+        const radialScale = Math.sqrt(safeScale[0] * safeScale[2]);
         newSize[0] = Math.max(0.001, (n.geom.size[0] || 0.05) * radialScale);
         newSize[1] = Math.max(0.001, (n.geom.size[1] || 0.2) * safeScale[1]);
       }

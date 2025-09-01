@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Move, RotateCw, Shapes } from "lucide-react";
+import { Move, RotateCw, Shapes } from "lucide-react";
 
 // Removed sliders; using numeric inputs only per request
 

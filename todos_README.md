@@ -9,3 +9,4 @@
 - tabs for each part so you can preview parts and not the entire thing
 - menu buttons and move download there
 - the scene tab looks weird
+- scaling is still bad

@@ -16,7 +16,7 @@ export default function XmlPreview() {
   const [draft, setDraft] = useState<string>(xml);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<number | null>(null);
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<{ hasTextFocus?: () => boolean } | null>(null);
   const isTypingRef = useRef(false);
   const typingTimeoutRef = useRef<number | null>(null);
   const lastAppliedStoreXmlRef = useRef<string>(xml);

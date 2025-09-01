@@ -1,11 +1,9 @@
 "use client";
 
 import { useMjcfEditorStore } from "@/contexts/MjcfEditorStore";
-import { Button } from "@/components/ui/button";
 // Panels should render body-only (no cards)
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Layers3, Box, MoreVertical } from "lucide-react";
+import { Box, MoreVertical } from "lucide-react";
 import * as React from "react";
 import {
   DropdownMenu,
@@ -63,27 +61,8 @@ export default function HierarchyTree() {
     }
   }, [selection, editingId]);
 
-  // Deselect when clicking anywhere outside the explorer container
-  React.useEffect(() => {
-    const onGlobalMouseDown = (e: MouseEvent) => {
-      const el = containerRef.current;
-      if (!el) return;
-      const target = e.target as Node | null;
-      if (target && !el.contains(target)) {
-        if (editingId) {
-          // defer to allow input onBlur to commit first
-          setTimeout(() => {
-            selectOne(null);
-            setEditingId(null);
-          }, 0);
-        } else {
-          selectOne(null);
-        }
-      }
-    };
-    document.addEventListener('mousedown', onGlobalMouseDown, true);
-    return () => document.removeEventListener('mousedown', onGlobalMouseDown, true);
-  }, [editingId, selectOne]);
+  // Do NOT clear selection on clicks outside explorer; canvas click already deselects,
+  // and VS Code keeps selection when interacting with other panels like Inspector.
 
   // Keyboard shortcuts like VS Code: F2 rename, Delete already handled globally
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -134,7 +113,7 @@ export default function HierarchyTree() {
               <ContextMenu key={n.id}>
                 <ContextMenuTrigger className="w-full">
                     <div
-                      className={`w-full flex items-center gap-2 px-2 py-1 text-[11px] cursor-pointer ${
+                      className={`group w-full flex items-center gap-2 px-2 py-1 text-[12px] cursor-pointer ${
                         selections.includes(n.id)
                           ? 'bg-[var(--vscode-list-activeSelectionBackground,#094771)] text-[var(--vscode-list-activeSelectionForeground,#fff)]'
                           : 'hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)]'
@@ -161,16 +140,16 @@ export default function HierarchyTree() {
                             if (e.key === 'Enter') commitRename();
                             if (e.key === 'Escape') cancelRename();
                           }}
-                          className="h-5 text-[11px] font-mono px-1.5 w-40"
+                          className="h-5 md:h-5 text-[12px] md:text-[12px] px-1.5 w-40"
                         />
                       ) : (
-                        <span className="font-mono text-[11px] truncate">{n.name}</span>
+                        <span className="text-[12px] truncate">{n.name}</span>
                       )}
-                      <div className="ml-auto">
+                      <div className={`ml-auto transition-opacity ${selections.includes(n.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
-                              className="opacity-70 p-1 rounded-full transition-colors cursor-pointer"
+                              className="p-1 rounded-md transition-colors cursor-pointer hover:bg-[var(--vscode-toolbar-hoverBackground,#2a2d2e)]"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 selectOne(n.id);
@@ -178,15 +157,20 @@ export default function HierarchyTree() {
                               onMouseDown={(e) => e.preventDefault()}
                               aria-label="Open menu"
                             >
-                              <MoreVertical className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4 opacity-70" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" sideOffset={4} onCloseAutoFocus={(e) => e.preventDefault()}>
-                            <DropdownMenuItem onClick={() => startRename(n.id, n.name)}>
+                          <DropdownMenuContent
+                            align="end"
+                            sideOffset={6}
+                            onCloseAutoFocus={(e) => e.preventDefault()}
+                            className="min-w-[140px] rounded-md border border-[var(--vscode-editorGroup-border,#2d2d2d)] bg-[var(--vscode-editor-background,#1e1e1e)]/98 p-1 shadow-xl"
+                          >
+                            <DropdownMenuItem className="text-[12px] px-2 py-1.5 hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)]" onClick={() => startRename(n.id, n.name)}>
                               Rename
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
+                              className="text-[12px] px-2 py-1.5 text-red-500 focus:text-red-500 hover:text-red-500 hover:bg-red-500/10"
                               onClick={() => {
                                 selectOne(n.id);
                                 deleteSelected();
