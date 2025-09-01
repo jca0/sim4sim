@@ -126,7 +126,7 @@ export function GeometryMesh({ node, registerMesh }: GeometryMeshProps) {
     >
       {geometry}
       <meshStandardMaterial
-        color={node.geom.rgba ? `rgb(${node.geom.rgba[0] * 255}, ${node.geom.rgba[1] * 255}, ${node.geom.rgba[2] * 255})` : '#69b7ff'}
+        color={node.geom.rgba ? `rgb(${node.geom.rgba[0] * 255}, ${node.geom.rgba[1] * 255}, ${node.geom.rgba[2] * 255})` : '#0000ff'}
         opacity={node.geom.rgba?.[3] ?? 1}
         transparent={node.geom.rgba?.[3] !== undefined && node.geom.rgba[3] < 1}
         wireframe={isSelected}

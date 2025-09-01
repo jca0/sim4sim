@@ -100,11 +100,12 @@ export default function EditorPage() {
             className="bg-muted/30 overflow-hidden flex flex-col relative group"
           >
           <button
-            className="absolute top-0 right-[-4px] z-20 h-6 w-6 cursor-pointer opacity-70 hover:opacity-100 bg-transparent border-0 shadow-none inline-flex items-center justify-center"
+            className="absolute top-1/2 -translate-y-1/2 -right-3 z-20 h-8 w-8 rounded-full bg-background border shadow inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={toggleLeft}
             title={isLeftCollapsed ? "Expand left" : "Collapse left"}
+            aria-label={isLeftCollapsed ? "Expand left" : "Collapse left"}
           >
-            <ChevronLeft className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
           </button>
           <div className="p-2 space-y-3 overflow-auto flex-1">
             <PrimitivePalette />
@@ -127,11 +128,12 @@ export default function EditorPage() {
             className="bg-muted/30 overflow-hidden flex flex-col relative group"
           >
           <button
-            className="absolute top-0 left-[-2px] z-20 h-6 w-6 cursor-pointer opacity-70 hover:opacity-100 bg-transparent border-0 shadow-none inline-flex items-center justify-center"
+            className="absolute top-1/2 -translate-y-1/2 -left-3 z-20 h-8 w-8 rounded-full bg-background border shadow inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={toggleRight}
             title={isRightCollapsed ? "Expand right" : "Collapse right"}
+            aria-label={isRightCollapsed ? "Expand right" : "Collapse right"}
           >
-            <ChevronRight className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
           <ResizablePanelGroup direction="vertical" className="min-h-0 flex-1">
             <ResizablePanel defaultSize={45} minSize={20}>

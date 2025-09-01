@@ -11,6 +11,25 @@ import { Settings, Move, RotateCw, Shapes } from "lucide-react";
 
 // Removed sliders; using numeric inputs only per request
 
+function rgb01ToHex(r: number, g: number, b: number): string {
+  const to = (v: number) => {
+    const c = Math.round(Math.min(1, Math.max(0, v)) * 255);
+    return c.toString(16).padStart(2, "0");
+  };
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
+function hexToRgb01(hex: string): [number, number, number] {
+  let h = hex.replace("#", "");
+  if (h.length === 3) {
+    h = h.split("").map((ch) => ch + ch).join("");
+  }
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return [isFinite(r) ? r : 0, isFinite(g) ? g : 0, isFinite(b) ? b : 0];
+}
+
 // Convert quaternion [w, x, y, z] to Euler angles [x, y, z] in radians  
 function quatToEuler(quat: [number, number, number, number]): [number, number, number] {
   // Validate and normalize quaternion to prevent NaN
@@ -173,6 +192,11 @@ export default function Inspector() {
     );
   }
 
+  // Determine effective color: use node.geom.rgba when present, otherwise match viewer default '#69b7ff'
+  const DEFAULT_COLOR_HEX = "#0000ff";
+  const defaultRGB = hexToRgb01(DEFAULT_COLOR_HEX);
+  const effectiveRgba = (node.geom.rgba ?? [defaultRGB[0], defaultRGB[1], defaultRGB[2], 1]) as [number, number, number, number];
+
   const setPos = (i: number, v: number) => {
     const pos = [...node.pos] as [number, number, number];
     pos[i] = v;
@@ -295,14 +319,34 @@ export default function Inspector() {
           <Label className="text-sm font-medium flex items-center">Visual and Contact</Label>
           {/* RGBA on its own line */}
           <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">Color</Label>
+              <Input
+                type="color"
+                className="h-7 w-10 p-1 cursor-pointer"
+                value={rgb01ToHex(
+                  Number.isFinite(effectiveRgba[0]) ? effectiveRgba[0] : defaultRGB[0],
+                  Number.isFinite(effectiveRgba[1]) ? effectiveRgba[1] : defaultRGB[1],
+                  Number.isFinite(effectiveRgba[2]) ? effectiveRgba[2] : defaultRGB[2]
+                )}
+                onChange={(e) => {
+                  const [r, g, b] = hexToRgb01(e.target.value);
+                  const a = Number.isFinite(effectiveRgba[3]) ? effectiveRgba[3] : 1;
+                  const rgba = [r, g, b, a] as [number, number, number, number];
+                  const nodes = useMjcfEditorStore.getState().nodes.map(n => n.id === node.id ? { ...n, geom: { ...n.geom, rgba } } : n);
+                  useMjcfEditorStore.setState({ nodes });
+                  useMjcfEditorStore.getState().rebuildXml();
+                }}
+              />
+            </div>
             <Label className="text-xs text-muted-foreground">Color (RGBA 0..1)</Label>
             <div className="grid grid-cols-4 gap-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <NumberInput
                   key={i}
-                  value={node.geom.rgba?.[i] ?? (i === 3 ? 1 : 0.5)}
+                  value={Number.isFinite(effectiveRgba[i]) ? effectiveRgba[i] : (i === 3 ? 1 : defaultRGB[i as 0 | 1 | 2] ?? 0.5)}
                   onCommit={(val) => {
-                    const arr = [...(node.geom.rgba ?? [0.5, 0.5, 0.5, 1])] as [number, number, number, number];
+                    const arr = [...(node.geom.rgba ?? effectiveRgba)] as [number, number, number, number];
                     arr[i] = Math.min(1, Math.max(0, val));
                     const rgba = arr as [number, number, number, number];
                     const nodes = useMjcfEditorStore.getState().nodes.map(n => n.id === node.id ? { ...n, geom: { ...n.geom, rgba } } : n);

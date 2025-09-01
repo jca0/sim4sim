@@ -114,6 +114,10 @@ export function Scene({ transformMode }: SceneProps) {
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
+        makeDefault
+        enableDamping
+        dampingFactor={0.08}
+        zoomToCursor
         minDistance={2}
         maxDistance={50}
         target={[0, 1, 0]}

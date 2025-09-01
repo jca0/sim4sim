@@ -14,6 +14,7 @@ export function useTransformControls() {
   }));
   
   const [initialScale, setInitialScale] = useState<THREE.Vector3 | null>(null);
+  const [lastReportedScale, setLastReportedScale] = useState<THREE.Vector3 | null>(null);
 
   const handleMouseDown = useCallback((
     transformMode: TransformMode, 
@@ -25,6 +26,7 @@ export function useTransformControls() {
     // Store initial scale when starting to scale
     if (transformMode === 'scale' && targetMesh) {
       setInitialScale(targetMesh.scale.clone());
+      setLastReportedScale(new THREE.Vector3(1, 1, 1));
     }
   }, []);
 
@@ -39,38 +41,56 @@ export function useTransformControls() {
       // Handle scale mode - update geometry size
       if (initialScale) {
         const currentScale = targetMesh.scale;
-        
+
         // Validate scale values to prevent NaN
         const safeCurrentScale = {
           x: Number.isFinite(currentScale.x) ? currentScale.x : 1,
           y: Number.isFinite(currentScale.y) ? currentScale.y : 1,
           z: Number.isFinite(currentScale.z) ? currentScale.z : 1
         };
-        
+
         const safeInitialScale = {
           x: Number.isFinite(initialScale.x) ? initialScale.x : 1,
           y: Number.isFinite(initialScale.y) ? initialScale.y : 1,
           z: Number.isFinite(initialScale.z) ? initialScale.z : 1
         };
-        
-        // Calculate delta scale with reduced sensitivity
-        const sensitivity = 0.1; // Reduce sensitivity to 10%
-        const deltaScale = new THREE.Vector3(
-          1 + (safeCurrentScale.x - safeInitialScale.x) * sensitivity,
-          1 + (safeCurrentScale.y - safeInitialScale.y) * sensitivity, 
-          1 + (safeCurrentScale.z - safeInitialScale.z) * sensitivity
+
+        // Compute scale factor relative to initial drag start
+        const rawFactor = new THREE.Vector3(
+          safeCurrentScale.x / (safeInitialScale.x || 1),
+          safeCurrentScale.y / (safeInitialScale.y || 1),
+          safeCurrentScale.z / (safeInitialScale.z || 1)
         );
-        
-        // Clamp scale values to reasonable range and ensure finite
-        deltaScale.x = Math.max(0.1, Math.min(3, Number.isFinite(deltaScale.x) ? deltaScale.x : 1));
-        deltaScale.y = Math.max(0.1, Math.min(3, Number.isFinite(deltaScale.y) ? deltaScale.y : 1));
-        deltaScale.z = Math.max(0.1, Math.min(3, Number.isFinite(deltaScale.z) ? deltaScale.z : 1));
-        
-        updateScale(selectedNode.id, [deltaScale.x, deltaScale.y, deltaScale.z]);
-        
-        // Reset mesh scale to 1,1,1 since we've applied it to geometry
-        targetMesh.scale.set(1, 1, 1);
-        setInitialScale(new THREE.Vector3(1, 1, 1));
+
+        // Always use coarse sensitivity
+        // factor' = 1 + (factor - 1) * sensitivity
+        const sensitivity = 0.18;
+        const overallFactor = new THREE.Vector3(
+          1 + (rawFactor.x - 1) * sensitivity,
+          1 + (rawFactor.y - 1) * sensitivity,
+          1 + (rawFactor.z - 1) * sensitivity
+        );
+
+        // Compute incremental factor since last report to avoid compounding
+        const last = lastReportedScale ?? new THREE.Vector3(1, 1, 1);
+        const incremental = new THREE.Vector3(
+          (Number.isFinite(overallFactor.x) ? overallFactor.x : 1) / (last.x || 1),
+          (Number.isFinite(overallFactor.y) ? overallFactor.y : 1) / (last.y || 1),
+          (Number.isFinite(overallFactor.z) ? overallFactor.z : 1) / (last.z || 1)
+        );
+
+        // Clamp per-tick change to keep it smooth using coarse range
+        const minStep = 0.7;
+        const maxStep = 1.6;
+        incremental.x = Math.max(minStep, Math.min(maxStep, incremental.x));
+        incremental.y = Math.max(minStep, Math.min(maxStep, incremental.y));
+        incremental.z = Math.max(minStep, Math.min(maxStep, incremental.z));
+
+        updateScale(selectedNode.id, [incremental.x, incremental.y, incremental.z]);
+
+        // Keep gizmo stable by restoring baseline and remember last overall factor
+        targetMesh.scale.set(safeInitialScale.x, safeInitialScale.y, safeInitialScale.z);
+        setLastReportedScale(overallFactor);
       }
     } else {
       // Handle translate/rotate modes - update transform
@@ -100,6 +120,7 @@ export function useTransformControls() {
     // Re-enable orbit controls and clear state
     if (orbitRef.current) orbitRef.current.enabled = true;
     setInitialScale(null);
+    setLastReportedScale(null);
   }, []);
 
   return {
