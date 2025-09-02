@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Move, RotateCw, Shapes } from "lucide-react";
+import { Move, RotateCw, Shapes, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Removed sliders; using numeric inputs only per request
 
@@ -157,7 +158,7 @@ function NumberInput({
           onCommit(v);
         }
       }}
-      className={className}
+      className={`h-5 md:h-5 text-[11px] md:text-[11px] rounded-none px-1 w-full border border-[var(--vscode-editorGroup-border,#2d2d2d)] bg-[var(--vscode-editor-background,#1e1e1e)]/60 focus-visible:ring-0 focus-visible:border-[var(--vscode-list-activeSelectionBackground,#094771)] ${className ?? ""}`}
     />
   );
 }
@@ -216,11 +217,39 @@ export default function Inspector() {
       <div className="flex-1 overflow-auto space-y-4 p-3">
         {/* Body Info */}
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground">Body Name</Label>
+          <div className="text-sm font-medium flex items-center text-[var(--vscode-foreground,#d4d4d4)]">
+            Body
+          </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="font-mono text-xs">
-              {node.name}
-            </Badge>
+            <Input
+              type="text"
+              defaultValue={node.name}
+              onBlur={(e) => {
+                const name = e.target.value.trim();
+                if (name && name !== node.name) {
+                  useMjcfEditorStore.getState().renameSelected(name);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  (e.target as HTMLInputElement).blur();
+                }
+                if (e.key === 'Escape') {
+                  (e.target as HTMLInputElement).value = node.name;
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              className="h-5 md:h-5 text-[11px] md:text-[11px] rounded-none px-1 w-full border border-[var(--vscode-editorGroup-border,#2d2d2d)] bg-[var(--vscode-editor-background,#1e1e1e)]/60 focus-visible:ring-0 focus-visible:border-[var(--vscode-list-activeSelectionBackground,#094771)]"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => useMjcfEditorStore.getState().deleteSelected()}
+              title="Delete body"
+              className="h-7 px-2 rounded-none"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -228,10 +257,9 @@ export default function Inspector() {
 
         {/* Position */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium flex items-center">
-            <Move className="mr-2 h-4 w-4" />
+          <div className="text-sm font-medium flex items-center text-[var(--vscode-foreground,#d4d4d4)]">
             Position
-          </Label>
+          </div>
           <div className="grid grid-cols-3 gap-2">
             {["X", "Y", "Z"].map((axis, i) => (
               <div key={axis} className="space-y-1">
@@ -250,10 +278,9 @@ export default function Inspector() {
 
         {/* Rotation */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium flex items-center">
-            <RotateCw className="mr-2 h-4 w-4" />
+          <div className="text-sm font-medium flex items-center text-[var(--vscode-foreground,#d4d4d4)]">
             Rotation (degrees)
-          </Label>
+          </div>
           <div className="grid grid-cols-3 gap-2">
             {quatToEuler(node.quat).map((angle, i) => (
               <div key={i} className="space-y-1">
@@ -273,10 +300,9 @@ export default function Inspector() {
         {/* Geometry */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Label className="text-sm font-medium flex items-center">
-              <Shapes className="mr-2 h-4 w-4" />
+            <div className="text-sm font-medium flex items-center text-[var(--vscode-foreground,#d4d4d4)]">
               Geometry
-            </Label>
+            </div>
             <Badge variant="outline" className="capitalize">
               {node.geom.type}
             </Badge>
@@ -301,13 +327,13 @@ export default function Inspector() {
         {/* Visual + physics flags */}
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center">Visual and Contact</Label>
-          {/* RGBA on its own line */}
+          {/* Color + RGBA on one row */}
           <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">Color</Label>
+            <Label className="text-xs text-muted-foreground">Color (RGBA)</Label>
+            <div className="grid grid-cols-5 gap-2 items-center">
               <Input
                 type="color"
-                className="h-7 w-10 p-1 cursor-pointer"
+                className="h-7 w-full p-1 cursor-pointer"
                 value={rgb01ToHex(
                   Number.isFinite(effectiveRgba[0]) ? effectiveRgba[0] : defaultRGB[0],
                   Number.isFinite(effectiveRgba[1]) ? effectiveRgba[1] : defaultRGB[1],
@@ -322,9 +348,6 @@ export default function Inspector() {
                   useMjcfEditorStore.getState().rebuildXml();
                 }}
               />
-            </div>
-            <Label className="text-xs text-muted-foreground">Color (RGBA 0..1)</Label>
-            <div className="grid grid-cols-4 gap-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <NumberInput
                   key={i}
@@ -340,14 +363,15 @@ export default function Inspector() {
                   step={0.01}
                   min={0}
                   max={1}
+                  className="w-full"
                 />
               ))}
             </div>
           </div>
 
           {/* Other flags */}
-          <div className="grid grid-cols-4 gap-2">
-            <div className="space-y-1">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-1 w-full">
               <Label className="text-xs text-muted-foreground">Group</Label>
               <NumberInput
                 value={node.geom.group ?? 0}
@@ -357,9 +381,10 @@ export default function Inspector() {
                   useMjcfEditorStore.setState({ nodes });
                   useMjcfEditorStore.getState().rebuildXml();
                 }}
+                className="w-full"
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 w-full">
               <Label className="text-xs text-muted-foreground">Contype</Label>
               <NumberInput
                 value={node.geom.contype ?? 0}
@@ -369,9 +394,10 @@ export default function Inspector() {
                   useMjcfEditorStore.setState({ nodes });
                   useMjcfEditorStore.getState().rebuildXml();
                 }}
+                className="w-full"
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 w-full">
               <Label className="text-xs text-muted-foreground">Conaffinity</Label>
               <NumberInput
                 value={node.geom.conaffinity ?? 0}
@@ -381,11 +407,12 @@ export default function Inspector() {
                   useMjcfEditorStore.setState({ nodes });
                   useMjcfEditorStore.getState().rebuildXml();
                 }}
+                className="w-full"
               />
             </div>
-            <div className="space-y-1 col-span-2">
+            <div className="space-y-1 col-span-3">
               <Label className="text-xs text-muted-foreground">Friction (slide, spin, roll)</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 [&>input]:w-full">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <NumberInput
                     key={i}
@@ -400,6 +427,7 @@ export default function Inspector() {
                     }}
                     step={0.01}
                     min={0}
+                    className="w-full"
                   />
                 ))}
               </div>

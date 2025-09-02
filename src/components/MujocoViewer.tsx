@@ -24,7 +24,7 @@ export default function MujocoViewer() {
               <Shapes className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" sideOffset={6}>
+          <DropdownMenuContent align="center" sideOffset={6} side="top">
             <DropdownMenuItem onClick={() => addPrimitive('sphere')} className="cursor-pointer"><Circle className="w-4 h-4 mr-2" />Sphere</DropdownMenuItem>
             <DropdownMenuItem onClick={() => addPrimitive('box')} className="cursor-pointer"><Square className="w-4 h-4 mr-2" />Box</DropdownMenuItem>
             <DropdownMenuItem onClick={() => addPrimitive('capsule')} className="cursor-pointer"><Pill className="w-4 h-4 mr-2" />Capsule</DropdownMenuItem>

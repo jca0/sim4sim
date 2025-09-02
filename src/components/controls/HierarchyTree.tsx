@@ -140,7 +140,7 @@ export default function HierarchyTree() {
                             if (e.key === 'Enter') commitRename();
                             if (e.key === 'Escape') cancelRename();
                           }}
-                          className="h-5 md:h-5 text-[12px] md:text-[12px] px-1.5 w-40"
+                          className="h-5 md:h-5 text-[12px] md:text-[12px] px-1.5 w-40 rounded-none"
                         />
                       ) : (
                         <span className="text-[12px] truncate">{n.name}</span>
